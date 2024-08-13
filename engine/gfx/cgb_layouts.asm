@@ -6,7 +6,7 @@ CheckCGB:
 	ret
 
 LoadSGBLayoutCGB:
-	ld a, b
+	ld a, b			; b contains the layout index
 	cp SCGB_DEFAULT
 	jr nz, .not_default
 	ld a, [wDefaultSGBLayout]
@@ -14,16 +14,25 @@ LoadSGBLayoutCGB:
 	cp SCGB_PARTY_MENU_HP_BARS
 	jp z, CGB_ApplyPartyMenuHPPals
 	call ResetBGPals
+
+	; a contains the layout index
+	; hl <- [SGBLayoutJumptable + a]
 	ld l, a
 	ld h, 0
 	add hl, hl
 	ld de, CGBLayoutJumptable
 	add hl, de
+
+	; hl <- Layout address	
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
+
+	; push .done
 	ld de, .done
 	push de
+
+	; Execute layout routine
 	jp hl
 .done:
 	ret
@@ -873,19 +882,26 @@ _CGB_MagnetTrain: ; unused
 	ret
 
 _CGB_GamefreakLogo:
-	ld de, wBGPals1
+
+	; Copy palette PREDEFPAL_GAMEFREAK_LOGO_BG to wBGPals1
+	ld de, wBGPals1				; de points to wBGPals1 in WRAM
 	ld a, PREDEFPAL_GAMEFREAK_LOGO_BG
-	call GetPredefPal
+	call GetPredefPal			; hl <- PredefPals + 3*a
 	call LoadHLPaletteIntoDE
+
+	; Copy palette GamefreakDittoPalette to palette 1 of wOBPals1
 	ld hl, .GamefreakDittoPalette
-	ld de, wOBPals1
+	ld de, wOBPals1				; de points to wOBPals1 (palette 0) in WRAM
 	call LoadHLPaletteIntoDE
+
+	; Copy palette GamefreakDittoPalette to palette 2 of wOBPals1
 	ld hl, .GamefreakDittoPalette
-	ld de, wOBPals1 palette 1
+	ld de, wOBPals1 palette 1	; de pointd to wOBPals1 (palette 1) in WRAM
 	call LoadHLPaletteIntoDE
-	call WipeAttrmap
-	call ApplyAttrmap
-	call ApplyPals
+
+	call WipeAttrmap	; Clear wAttrmap (bg tiles attributes)
+	call ApplyAttrmap	; Copy BG tiles attributes from wAttrMap to vBGMap2
+	call ApplyPals		; Copy palettes wBGPals1 and wOBPals1 to wBGPals2 and wOBPals2
 	ret
 
 .GamefreakDittoPalette:

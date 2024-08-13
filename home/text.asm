@@ -19,9 +19,12 @@ FillBoxWithByte::
 	jr nz, .row
 	ret
 
-ClearTilemap::
+	
 ; Fill wTilemap with blank tiles.
+ClearTilemap::
 
+ 	; Fills Tilemap with " "
+	; The wram space reserved for the tilemap is between wTilemap and wTilemapEnd
 	hlcoord 0, 0
 	ld a, " "
 	ld bc, wTilemapEnd - wTilemap
@@ -30,7 +33,7 @@ ClearTilemap::
 	; Update the BG Map.
 	ldh a, [rLCDC]
 	bit rLCDC_ENABLE, a
-	ret z
+	ret z			; LCD disabled?
 	jp WaitBGMap
 
 ClearScreen::
@@ -164,13 +167,16 @@ SetUpTextbox::
 	pop hl
 	ret
 
+; Copy 8 bits characters sequence (ending with @) from de to hl
+; de: source address
+; hl: destination address  
 PlaceString::
 	push hl
 	; fallthrough
 
 PlaceNextChar::
 	ld a, [de]
-	cp "@"
+	cp "@"									; End of string?
 	jr nz, CheckDict
 	ld b, h
 	ld c, l

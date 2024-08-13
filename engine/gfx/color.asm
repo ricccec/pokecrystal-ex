@@ -470,17 +470,23 @@ GetPredefPal:
 	ret
 
 LoadHLPaletteIntoDE:
+	; Push space #1 mapped bank
 	ldh a, [rSVBK]
 	push af
+
+	; Switch space #1 bank
 	ld a, BANK(wOBPals1)
 	ldh [rSVBK], a
-	ld c, 1 palettes
+
+	ld c, 1 palettes	; c <- 8 (size of a palette, in bytes)
 .loop
+	; Copy c bytes from [hl] to [de]
 	ld a, [hli]
 	ld [de], a
 	inc de
 	dec c
 	jr nz, .loop
+
 	pop af
 	ldh [rSVBK], a
 	ret
@@ -568,29 +574,38 @@ ResetBGPals:
 	pop af
 	ret
 
+; Clears wAttrmap
 WipeAttrmap:
-	hlcoord 0, 0, wAttrmap
+	hlcoord 0, 0, wAttrmap	; hl <- wAttrmap
 	ld bc, SCREEN_WIDTH * SCREEN_HEIGHT
 	xor a
 	call ByteFill
 	ret
 
+; Copy palettes wBGPals1 and wOBPals1 to wBGPals2 and wOBPals2
 ApplyPals:
 	ld hl, wBGPals1
 	ld de, wBGPals2
-	ld bc, 16 palettes
+	ld bc, 16 palettes		; Num. of bytes to copy: 16 * 8
 	ld a, BANK(wGBCPalettes)
-	call FarCopyWRAM
+	call FarCopyWRAM		; Copy bc bytes from hl to de
 	ret
 
+; --------------------------------------------------
+; Copy BG tiles attributes from wAttrMap to vBGMap2
+; --------------------------------------------------
 ApplyAttrmap:
-	ldh a, [rLCDC]
+	
+	; Check LCD is disabled
+	ldh a, [rLCDC]			; read LCD control register
 	bit rLCDC_ENABLE, a
-	jr z, .UpdateVBank1
+	jr z, .UpdateVBank1		; LCD disabled?
+	
+	; Update vBGMap2 during vblank
 	ldh a, [hBGMapMode]
 	push af
 	ld a, $2
-	ldh [hBGMapMode], a
+	ldh [hBGMapMode], a		; hBGMapMode = 2 (BG Map attrs)
 	call DelayFrame
 	call DelayFrame
 	call DelayFrame
@@ -600,19 +615,23 @@ ApplyAttrmap:
 	ret
 
 .UpdateVBank1:
-	hlcoord 0, 0, wAttrmap
-	debgcoord 0, 0
+	hlcoord 0, 0, wAttrmap	; hl <- wAttrmap
+	debgcoord 0, 0			; de <- vBGMap0
 	ld b, SCREEN_HEIGHT
 	ld a, $1
-	ldh [rVBK], a
+	ldh [rVBK], a			; Switch to vram bank 1
 .row
 	ld c, SCREEN_WIDTH
 .col
+	; Copy attributes from wAttrMap to vBGMap2
 	ld a, [hli]
 	ld [de], a
 	inc de
 	dec c
 	jr nz, .col
+
+	; wAttrmap is 20x18, but vBGMap2 is 32x32
+	; skip the last 32 - 20 columns
 	ld a, BG_MAP_WIDTH - SCREEN_WIDTH
 	add e
 	jr nc, .okay
@@ -622,7 +641,7 @@ ApplyAttrmap:
 	dec b
 	jr nz, .row
 	ld a, $0
-	ldh [rVBK], a
+	ldh [rVBK], a			; Back to vram bank 0
 	ret
 
 ; CGB layout for SCGB_PARTY_MENU_HP_BARS

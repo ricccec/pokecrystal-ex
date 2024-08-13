@@ -1,12 +1,12 @@
 ClearBGPalettes::
-	call ClearPalettes
+	call ClearPalettes 			; Fills wBGPals2 and wOBPals2 with $ff
 WaitBGMap::
-; Tell VBlank to update BG Map
+; Tell VBlank to update BG Map 0 tile indx
 	ld a, 1 ; BG Map 0 tiles
 	ldh [hBGMapMode], a
 ; Wait for it to do its magic
-	ld c, 4
-	call DelayFrames
+	ld c, 4						; 4 frames
+	call DelayFrames			; Wait 4 VBlanks (frames)
 	ret
 
 WaitBGMap2::
@@ -159,14 +159,15 @@ SetDefaultBGPAndOBP::
 .SetDefaultBGPAndOBPForGameBoyColor:
 	push de
 	ld a, %11100100
-	call DmgToCgbBGPals
+	call DmgToCgbBGPals				; copy the 8 BG palettes in order 11100100 (i.e. 0-1-2-3) from wBGPals1 to wBGPals2
 	lb de, %11100100, %11100100
 	call DmgToCgbObjPals
 	pop de
 	ret
 
-ClearPalettes::
+; Fills wBGPals2 and wOBPals2 with $ff
 ; Make all palettes white
+ClearPalettes::
 
 ; CGB: make all the palette colors white
 	ldh a, [hCGB]
@@ -181,9 +182,10 @@ ClearPalettes::
 	ret
 
 .cgb
-	ldh a, [rSVBK]
+	ldh a, [rSVBK] ; wram bank select register
 	push af
 
+	; Fills wBGPals2 and wOBPals2 with $ff
 	ld a, BANK(wBGPals2)
 	ldh [rSVBK], a
 
@@ -208,14 +210,14 @@ GetSGBLayout::
 
 	ldh a, [hCGB]
 	and a
-	jr nz, .sgb
+	jr nz, .sgb		; hCGB != 0
 
 	ldh a, [hSGB]
 	and a
-	ret z
+	ret z			; hSGB == 0
 
 .sgb
-	predef_jump LoadSGBLayout
+	predef_jump LoadSGBLayout	; hCGB != 0 OR hSGB != 0
 
 SetHPPal::
 ; Set palette for hp bar pixel length e at hl.

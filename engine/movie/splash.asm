@@ -5,21 +5,31 @@ SplashScreen:
 ; Reinitialize everything
 	ld de, MUSIC_NONE
 	call PlayMusic
-	call ClearBGPalettes
-	call ClearTilemap
+	call ClearBGPalettes	; Fills wBGPals2 and wOBPals2 with $ff
+	call ClearTilemap		; Fills BG Map 0 with " "
+	
+	 ;======== Clear some hRAM ========
+	; [hBGMapAddress] <- vBGMap0
 	ld a, HIGH(vBGMap0)
 	ldh [hBGMapAddress + 1], a
 	xor a ; LOW(vBGMap0)
 	ldh [hBGMapAddress], a
+	
 	ldh [hJoyDown], a
 	ldh [hSCX], a
 	ldh [hSCY], a
 	ld a, SCREEN_HEIGHT_PX
 	ldh [hWY], a
+	;========
+
 	call WaitBGMap
-	ld b, SCGB_GAMEFREAK_LOGO
-	call GetSGBLayout
-	call SetDefaultBGPAndOBP
+
+	ld b, SCGB_GAMEFREAK_LOGO			; Load GF logo layout index into b
+	call GetSGBLayout					; Load pal PREDEFPAL_GAMEFREAK_LOGO_BG into wBGPals1 pal 0
+										; and GamefreakDittoPalette into wOBPals1 pal 0, 1
+	call SetDefaultBGPAndOBP			; wBGPals1->wBGPals2
+										; wOBPals1->wOBPals2
+										; request palette update
 	ld c, 10
 	call DelayFrames
 
@@ -36,15 +46,18 @@ SplashScreen:
 ; Play GameFreak logo animation
 	call GameFreakPresentsInit
 .joy_loop
+; Any button pressed?
 	call JoyTextDelay
 	ldh a, [hJoyLast]
 	and BUTTONS
-	jr nz, .pressed_button
+	jr nz, .pressed_button				; A, B, start or sel.
+; Animation finished?
 	ld a, [wJumptableIndex]
 	bit 7, a
 	jr nz, .finish
-	call GameFreakPresentsScene
-	farcall PlaySpriteAnimations
+; Render frame
+	call GameFreakPresentsScene			; Jump to one of the .scenes based on wJumptableIndex
+	farcall PlaySpriteAnimations		; Engine core function to update all the sprite animations
 	call DelayFrame
 	jr .joy_loop
 
@@ -59,59 +72,81 @@ SplashScreen:
 	ret
 
 GameFreakPresentsInit:
+	; Load Game Freak logo tiles in vTiles2
 	ld de, GameFreakLogoGFX
 	ld hl, vTiles2
 	lb bc, BANK(GameFreakLogoGFX), 28
 	call Get1bpp
 
+	; Switch WRAM bank
 	ldh a, [rSVBK]
 	push af
 	ld a, BANK(wDecompressScratch)
 	ldh [rSVBK], a
 
+	; Decompress ditto anim. tiles from GameFreakDittoGFX to wDecompressScratch
 	ld hl, GameFreakDittoGFX
 	ld de, wDecompressScratch
 	ld a, BANK(GameFreakDittoGFX)
 	call FarDecompress
 
+	; Copy decompressed tiles to vTiles0
 	ld hl, vTiles0
 	ld de, wDecompressScratch
-	lb bc, 1, 8 tiles
+	lb bc, 1, $80
 	call Request2bpp
 
+	; Copy decompressed tiles to vTiles1
 	ld hl, vTiles1
 	ld de, wDecompressScratch + $80 tiles
-	lb bc, 1, 8 tiles
+	lb bc, 1, $80
 	call Request2bpp
 
 	pop af
 	ldh [rSVBK], a
 
-	farcall ClearSpriteAnims
-	depixel 10, 11, 4, 0
+	; Initialize a sprite anim. struct with data from sprite 
+	; anim. obj. SPRITE_ANIM_OBJ_GAMEFREAK_LOGO
+	; The sprite will be drawn at pxl 4 of 10th col and pxl
+	; 0 of 11th row
+	farcall ClearSpriteAnims							; Clear WRAM wSpriteAnimData
+	depixel 10, 11, 4, 0								; de <- Pxl 4 of 10th col | pxl 0 of 11th row
 	ld a, SPRITE_ANIM_OBJ_GAMEFREAK_LOGO
 	call InitSpriteAnimStruct
+
+	; Initialize more fields of the struct
 	ld hl, SPRITEANIMSTRUCT_YOFFSET
 	add hl, bc
-	ld [hl], OAM_YCOORD_HIDDEN
+	ld [hl], OAM_YCOORD_HIDDEN							; Sprites with y >= 160 are invisible
+	
+	; Jump height
 	ld hl, SPRITEANIMSTRUCT_VAR1
 	add hl, bc
 	ld [hl], 96
+	
+	; Sine offset
 	ld hl, SPRITEANIMSTRUCT_VAR2
 	add hl, bc
 	ld [hl], 48
+	; Init. done
+
 	xor a
 	ld [wJumptableIndex], a
 	ld [wIntroSceneFrameCounter], a
 	ld [wIntroSceneTimer], a
+	
 	ldh [hSCX], a
 	ldh [hSCY], a
+	
 	ld a, 1
-	ldh [hBGMapMode], a
+	ldh [hBGMapMode], a									; Request map 0 tile indices update
+	
 	ld a, 144
 	ldh [hWY], a
+	
 	lb de, %11100100, %11100100
 	call DmgToCgbObjPals
+	
 	ret
 
 GameFreakPresentsEnd:
@@ -150,11 +185,11 @@ GameFreakPresents_PlaceGameFreak:
 .PlaceGameFreak:
 	ld [hl], 0
 	ld hl, .game_freak
-	decoord 5, 10
+	decoord 5, 10							; de <- col. 5, row 10  in wTilemap
 	ld bc, .end - .game_freak
 	call CopyBytes
-	call GameFreakPresents_NextScene
-	ld de, SFX_GAME_FREAK_PRESENTS
+	call GameFreakPresents_NextScene		; Increment wJumptableIndex
+	ld de, SFX_GAME_FREAK_PRESENTS			
 	call PlaySFX
 	ret
 
@@ -198,7 +233,9 @@ GameFreakPresents_WaitForTimer:
 	set 7, [hl]
 	ret
 
+; bc : sprite anim. struct
 GameFreakLogoSpriteAnim:
+; Execute scene based on SPRITEANIMSTRUCT_JUMPTABLE_INDEX
 	ld hl, SPRITEANIMSTRUCT_JUMPTABLE_INDEX
 	add hl, bc
 	ld e, [hl]
@@ -218,6 +255,7 @@ GameFreakLogoSpriteAnim:
 	dw GameFreakLogo_Transform
 	dw GameFreakLogo_Done
 
+; Simply move the index to the next scene (GameFreakLogo_Bounce)
 GameFreakLogo_Init:
 	ld hl, SPRITEANIMSTRUCT_JUMPTABLE_INDEX
 	add hl, bc
@@ -234,10 +272,10 @@ GameFreakLogo_Bounce:
 	add hl, bc
 	ld a, [hl]
 	and a
-	jr z, .done
+	jr z, .done	; Reached height=0?
 
 ; Load the sine offset, make sure it doesn't reach the negative part of the wave
-	ld d, a
+	ld d, a						; d <- prev. height
 	ld hl, SPRITEANIMSTRUCT_VAR2 ; sine offset
 	add hl, bc
 	ld a, [hl]
@@ -246,7 +284,7 @@ GameFreakLogo_Bounce:
 	jr nc, .no_negative
 	add 32
 .no_negative
-
+	; SPRITEANIMSTRUCT_YOFFSET = d * sin(offset * pi/32)
 	ld e, a
 	farcall BattleAnim_Sine_e ; e = d * sin(e * pi/32)
 	ld hl, SPRITEANIMSTRUCT_YOFFSET
@@ -272,12 +310,15 @@ GameFreakLogo_Bounce:
 	ret
 
 .done
+	; Increment scene index
 	ld hl, SPRITEANIMSTRUCT_JUMPTABLE_INDEX
 	add hl, bc
 	inc [hl]
+	; Clear VAR2 since it's needed for the next scene
 	ld hl, SPRITEANIMSTRUCT_VAR2
 	add hl, bc
 	ld [hl], 0
+	; Request SFX
 	ld de, SFX_DITTO_POP_UP
 	call PlaySFX
 	ret

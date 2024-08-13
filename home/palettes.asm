@@ -71,7 +71,7 @@ DmgToCgbBGPals::
 
 ; input: a -> bgp
 
-	ldh [rBGP], a
+	ldh [rBGP], a				; rBGP: DMG background palette register
 	push af
 
 ; Don't need to be here if DMG
@@ -86,6 +86,7 @@ DmgToCgbBGPals::
 	ldh a, [rSVBK]
 	push af
 
+	; Swith to WRAM bank that contains wBGPals2
 	ld a, BANK(wBGPals2)
 	ldh [rSVBK], a
 
@@ -97,7 +98,7 @@ DmgToCgbBGPals::
 	ld b, a
 ; all pals
 	ld c, 8
-	call CopyPals
+	call CopyPals 	; copy 8 palettes in order b from wBGPals1 to wBGPals2
 ; request pal update
 	ld a, TRUE
 	ldh [hCGBPalUpdate], a
@@ -239,17 +240,18 @@ CopyPals::
 	push bc
 	ld c, NUM_PAL_COLORS
 .loop
-	push de
-	push hl
+	push de										; push source pal
+	push hl										; push dest. pal
 
 ; get pal color
 	ld a, b
-	maskbits 1 << PAL_COLOR_SIZE
+	maskbits 1 << PAL_COLOR_SIZE				; and 00000011
 ; 2 bytes per color
 	add a
 	ld l, a
 	ld h, 0
-	add hl, de
+	add hl, de									; hl <- 2*color index + source pal
+	; Store curr. color in de
 	ld e, [hl]
 	inc hl
 	ld d, [hl]

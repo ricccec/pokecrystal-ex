@@ -318,10 +318,10 @@ JoyTextDelay::
 	jr z, .ok
 	ldh a, [hJoyDown]
 .ok
-	ldh [hJoyLast], a
+	ldh [hJoyLast], a ; hJoyLast = (hInMenu ? hJoyDown : hJoyPressed)
 	ldh a, [hJoyPressed]
 	and a
-	jr z, .checkframedelay
+	jr z, .checkframedelay	; No button pressed?
 	ld a, 15
 	ld [wTextDelayFrames], a
 	ret

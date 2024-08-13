@@ -1,5 +1,5 @@
-CopyBytes::
 ; copy bc bytes from hl to de
+CopyBytes::
 	inc b ; we bail the moment b hits 0, so include the last run
 	inc c ; same thing; include last byte
 	jr .HandleLoop
@@ -37,8 +37,8 @@ SwapBytes::
 	jr nz, .Loop
 	ret
 
-ByteFill::
 ; fill bc bytes with the value of a, starting at hl
+ByteFill::
 	inc b ; we bail the moment b hits 0, so include the last run
 	inc c ; same thing; include last byte
 	jr .HandleLoop
@@ -92,6 +92,8 @@ GetFarWord::
 	ret
 
 FarCopyWRAM::
+	; push rSVBK
+	; rSVBK <- a
 	ldh [hTempBank], a
 	ldh a, [rSVBK]
 	push af

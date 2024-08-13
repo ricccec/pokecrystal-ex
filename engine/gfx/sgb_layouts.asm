@@ -1,24 +1,33 @@
 LoadSGBLayout:
-	call CheckCGB
+	call CheckCGB			; [hCGB] != 0
 	jp nz, LoadSGBLayoutCGB
 
-	ld a, b
+	ld a, b					; b contains the layout index
 	cp SCGB_DEFAULT
 	jr nz, .not_default
 	ld a, [wDefaultSGBLayout]
 .not_default
 	cp SCGB_PARTY_MENU_HP_BARS
 	jp z, SGB_ApplyPartyMenuHPPals
+
+	; a contains the layout index
+	; hl <- [SGBLayoutJumptable + a]
 	ld l, a
 	ld h, 0
 	add hl, hl
 	ld de, SGBLayoutJumptable
 	add hl, de
+	
+	; hl <- Layout address
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
+
+	; push _LoadSGBLayout_ReturnFromJumptable
 	ld de, _LoadSGBLayout_ReturnFromJumptable
 	push de
+
+	; Execute layout routine
 	jp hl
 
 SGBLayoutJumptable:

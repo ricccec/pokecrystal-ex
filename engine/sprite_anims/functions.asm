@@ -1,8 +1,11 @@
+; bc : sprite anim. struct
 DoSpriteAnimFrame:
+; de <- struct's anim. seq ID
 	ld hl, SPRITEANIMSTRUCT_ANIM_SEQ_ID
 	add hl, bc
 	ld e, [hl]
 	ld d, 0
+; Jump to struct's anim. function
 	ld hl, .Jumptable
 	add hl, de
 	add hl, de

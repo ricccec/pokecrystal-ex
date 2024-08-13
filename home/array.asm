@@ -32,9 +32,9 @@ SkipNames::
 	dec a
 	jr nz, .loop
 	ret
-
-AddNTimes::
+	
 ; Add bc * a to hl.
+AddNTimes::
 	and a
 	ret z
 .loop

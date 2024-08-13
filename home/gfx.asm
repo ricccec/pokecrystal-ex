@@ -1,6 +1,7 @@
 DEF TILES_PER_CYCLE EQU 8
 DEF MOBILE_TILES_PER_CYCLE EQU 6
 
+; Copy c 2bpp tiles from b:de to hl
 Get2bppViaHDMA::
 	ldh a, [rLCDC]
 	bit rLCDC_ENABLE, a
@@ -10,6 +11,8 @@ Get2bppViaHDMA::
 
 	ret
 
+
+; Copy c 1bpp tiles from b:de to hl
 Get1bppViaHDMA::
 	ldh a, [rLCDC]
 	bit rLCDC_ENABLE, a
@@ -185,8 +188,8 @@ FarCopyBytesDouble:
 	rst Bankswitch
 	ret
 
-Request2bpp::
 ; Load 2bpp at b:de to occupy c tiles of hl.
+Request2bpp::
 	ldh a, [hBGMapMode]
 	push af
 	xor a
@@ -259,8 +262,8 @@ Request2bpp::
 	ld c, a
 	jr .loop
 
-Request1bpp::
 ; Load 1bpp at b:de to occupy c tiles of hl.
+Request1bpp::
 	ldh a, [hBGMapMode]
 	push af
 	xor a
@@ -362,31 +365,38 @@ Copy2bpp:
 
 	jp FarCopyBytes
 
-Get1bpp::
+; -----------------------------------------------
 ; copy c 1bpp tiles from b:de to hl
+; -----------------------------------------------
+Get1bpp::
+
 	ldh a, [rLCDC]
 	bit rLCDC_ENABLE, a
 	jp nz, Request1bpp
 	; fallthrough
 
-Copy1bpp::
-	push de
-	ld d, h
+; -----------------------------------------------
+; Copy c 1bpp tiles from b:de to c 2bpp tiles at hl
+; -----------------------------------------------
+Copy1bpp::									
+	push de			; Push font address
+	ld d, h			; vTiles2
 	ld e, l
 
 ; bank
-	ld a, b
+	ld a, b			; Bank
 
 ; bc = c * LEN_1BPP_TILE
-	push af
+	push af			; Push bank
 	ld h, 0
 	ld l, c
 	add hl, hl
 	add hl, hl
-	add hl, hl
-	ld b, h
+	add hl, hl		; hl = 8*c
+	ld b, h			; bc = hl
 	ld c, l
-	pop af
+	pop af			; Pop bank
 
-	pop hl
-	jp FarCopyBytesDouble
+	pop hl			; Pop font address
+	jp FarCopyBytesDouble					; Copy bc bytes from a:hl to bc*2 bytes at de,
+											; doubling each byte in the process.

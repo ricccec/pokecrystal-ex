@@ -1319,11 +1319,13 @@ ENDM
 Copyright:
 	call ClearTilemap
 	call LoadFontsExtra
+	; Copy 29 2bpp copyright tiles to vTiles2 (tile 96)
 	ld de, CopyrightGFX
 	ld hl, vTiles2 tile $60
 	lb bc, BANK(CopyrightGFX), 29
 	call Request2bpp
-	hlcoord 2, 7
+	
+	hlcoord 2, 7								; hl <- Tilemap col 2 row 7
 	ld de, CopyrightString
 	jp PlaceString
 

@@ -42,14 +42,19 @@ _LoadStandardFont::
 	ret
 
 _LoadFontsExtra1::
+	; Copy 1 1bpp tile from FontsExtra_SolidBlackGFX to vTiles2 ■ (0x9600, tile 96)
 	ld de, FontsExtra_SolidBlackGFX
 	ld hl, vTiles2 tile "■" ; $60
 	lb bc, BANK(FontsExtra_SolidBlackGFX), 1
 	call Get1bppViaHDMA
+
+	; Copy 1 2bpp tile from FontsExtra_SolidBlackGFX to vTiles2 ☎ (0x9620, tile 98)
 	ld de, PokegearPhoneIconGFX
 	ld hl, vTiles2 tile "☎" ; $62
 	lb bc, BANK(PokegearPhoneIconGFX), 1
 	call Get2bppViaHDMA
+
+	; Copy 22 2bpp tiles from FontExtra to vTiles2 <BOLD_D> (0x9630, tiles 99-120)
 	ld de, FontExtra + 3 tiles ; "<BOLD_D>"
 	ld hl, vTiles2 tile "<BOLD_D>"
 	lb bc, BANK(FontExtra), 22 ; "<BOLD_D>" to "ぉ"
@@ -71,12 +76,15 @@ _LoadFontsBattleExtra::
 	call Get2bppViaHDMA
 	jr LoadFrame
 
+; Copy 6 frame border tiles to vTiles2 (tiles 121 to 126)
 LoadFrame:
+	; hl <- Frames + (TEXTBOX_FRAME_TILES* LEN_1BPP_TILE)*wTextboxFrame
 	ld a, [wTextboxFrame]
 	maskbits NUM_FRAMES
 	ld bc, TEXTBOX_FRAME_TILES * LEN_1BPP_TILE
 	ld hl, Frames
 	call AddNTimes
+	
 	ld d, h
 	ld e, l
 	ld hl, vTiles2 tile "┌" ; $79

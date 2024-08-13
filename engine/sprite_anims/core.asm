@@ -21,6 +21,7 @@ PlaySpriteAnimations:
 	push bc
 	push af
 
+	; Reset wCurSpriteOAMAddr
 	ld a, LOW(wShadowOAM)
 	ld [wCurSpriteOAMAddr], a
 	call DoNextFrameForAllSprites
@@ -35,10 +36,10 @@ DoNextFrameForAllSprites:
 	ld hl, wSpriteAnimationStructs
 	ld e, NUM_SPRITE_ANIM_STRUCTS
 
-.loop
+.loop	; For each sprite anim. struct
 	ld a, [hl]
 	and a
-	jr z, .next ; This struct is deinitialized.
+	jr z, .next ; Skip uninitialized struct
 	ld c, l
 	ld b, h
 	push hl
@@ -114,7 +115,7 @@ _InitSpriteAnimStruct::
 ; Find if there's any room in the wSpriteAnimationStructs array, which is 10x16
 	push de
 	push af
-	ld hl, wSpriteAnimationStructs
+	ld hl, wSpriteAnimationStructs						; hl points to the current sprite anim. struct
 	ld e, NUM_SPRITE_ANIM_STRUCTS
 .loop
 	ld a, [hl]
@@ -146,7 +147,7 @@ _InitSpriteAnimStruct::
 .nonzero
 
 ; Get row a of SpriteAnimObjects, copy the pointer into de
-	pop af
+	pop af												; a = sprite animation object row
 	ld e, a
 	ld d, 0
 	ld hl, SpriteAnimObjects
@@ -226,30 +227,40 @@ DeinitializeAllSprites:
 	jr nz, .loop
 	ret
 
+; bc : sprite anim. struct
 UpdateAnimFrame:
-	call InitSpriteAnimBuffer ; init WRAM
-	call GetSpriteAnimFrame ; read from a memory array
+	call InitSpriteAnimBuffer 	; init WRAM with data from the anim. struct
+	call GetSpriteAnimFrame 	; Store byte 1 of the current oamframe into a
+								; Move to the next frame if the current one is over
+	; Curr. frame is a command?
 	cp oamwait_command
 	jr z, .done
 	cp oamdelete_command
 	jr z, .delete
-	call GetFrameOAMPointer
-	; add byte to [wCurAnimVTile]
+	
+	; Handle the current frame OAM Data (see data/sprite_anims/oam.asm)
+	call GetFrameOAMPointer		; hl <- SpriteAnimOAMData 
+	; The first byte is the tile offset
 	ld a, [wCurAnimVTile]
 	add [hl]
 	ld [wCurAnimVTile], a
+
+	; load OAM data pointer into hl
 	inc hl
-	; load pointer into hl
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
+
+	; e <- curr. sprite OAM address
+	; d <- HIGH(wShadowOAM)
+	; c <- how many tiles?
 	push bc
 	ld a, [wCurSpriteOAMAddr]
 	ld e, a
 	ld d, HIGH(wShadowOAM)
 	ld a, [hli]
-	ld c, a ; number of objects
-.loop
+	ld c, a ; number of tiles in the sprite
+.loop	; For each tile...
 	; first byte: y (px)
 	; [de] = [wCurAnimYCoord] + [wCurAnimYOffset] + [wGlobalAnimYOffset] + AddOrSubtractY([hl])
 	ld a, [wCurAnimYCoord]
@@ -262,9 +273,9 @@ UpdateAnimFrame:
 	ld b, a
 	call AddOrSubtractY
 	add b
-	ld [de], a
-	inc hl
-	inc de
+	ld [de], a				; Write 1th OAM byte 
+	inc hl					
+	inc de					; Next OAM byte
 	; second byte: x (px)
 	; [de] = [wCurAnimXCoord] + [wCurAnimXOffset] + [wGlobalAnimXOffset] + AddOrSubtractX([hl])
 	ld a, [wCurAnimXCoord]
@@ -277,28 +288,28 @@ UpdateAnimFrame:
 	ld b, a
 	call AddOrSubtractX
 	add b
-	ld [de], a
+	ld [de], a				; Write 2th OAM byte 
 	inc hl
-	inc de
+	inc de					; Next OAM byte
 	; third byte: vtile
 	; [de] = [wCurAnimVTile] + [hl]
 	ld a, [wCurAnimVTile]
 	add [hl]
-	ld [de], a
+	ld [de], a				; Write 3rd OAM byte 
 	inc hl
-	inc de
+	inc de					; Next OAM byte
 	; fourth byte: attributes
 	; [de] = GetSpriteOAMAttr([hl])
 	call GetSpriteOAMAttr
 	ld [de], a
-	inc hl
-	inc de
+	inc hl					; Next tile (if any)
+	inc de					; Next OAM object
 	ld a, e
 	ld [wCurSpriteOAMAddr], a
 	cp LOW(wShadowOAMEnd)
-	jr nc, .reached_the_end
-	dec c
-	jr nz, .loop
+	jr nc, .reached_the_end	; We have reached the 40 sprites limit
+	dec c					
+	jr nz, .loop			; Next tile
 	pop bc
 	jr .done
 
@@ -356,6 +367,7 @@ GetSpriteOAMAttr:
 	or b
 	ret
 
+; bc : sprite anim. struct
 InitSpriteAnimBuffer:
 	xor a
 	ld [wCurSpriteOAMFlags], a
@@ -378,20 +390,20 @@ GetSpriteAnimVTile:
 	push hl
 	push bc
 	ld hl, wSpriteAnimDict
-	ld b, a
+	ld b, a												; b = Sprite anim. object's dictionary (aka tile ID)
 	ld c, NUM_SPRITEANIMDICT_ENTRIES
 .loop
 	ld a, [hli]
 	cp b
-	jr z, .ok
-	inc hl
+	jr z, .ok											; KEY matches?
+	inc hl												; Each dict. entry is 2 bytes
 	dec c
 	jr nz, .loop
 	xor a
 	jr .done
 
 .ok
-	ld a, [hl]
+	ld a, [hl]											; Return VALUE in a
 
 .done
 	pop bc
@@ -410,13 +422,17 @@ _ReinitSpriteAnimFrame::
 	ld [hl], -1
 	ret
 
+; bc : sprite anim. struct
 GetSpriteAnimFrame:
 .loop
+	; Check if current frame is over
 	ld hl, SPRITEANIMSTRUCT_DURATION
 	add hl, bc
 	ld a, [hl]
-	and a
-	jr z, .next_frame
+	and a									; SPRITEANIMSTRUCT_DURATION == 0
+	jr z, .next_frame							
+
+	; Frame is not over
 	dec [hl]
 	call .GetPointer
 	ld a, [hli]
@@ -424,9 +440,12 @@ GetSpriteAnimFrame:
 	jr .okay
 
 .next_frame
+	; Increment frame count (field SPRITEANIMSTRUCT_FRAME)
 	ld hl, SPRITEANIMSTRUCT_FRAME
 	add hl, bc
 	inc [hl]
+
+	; Read new frame's oamframe command (if any)
 	call .GetPointer
 	ld a, [hli]
 	cp oamrestart_command
@@ -434,18 +453,24 @@ GetSpriteAnimFrame:
 	cp oamend_command
 	jr z, .repeat_last
 
+	; Read oamframe duration into a (ignore the flip bits)
 	push af
 	ld a, [hl]
-	push hl
-	and ~(Y_FLIP << 1 | X_FLIP << 1)
+	push hl														; Push flip bits to use them later in .okay
+	and ~(Y_FLIP << 1 | X_FLIP << 1)							; reset bits 7, 6 (flip bits)
+
+	; SPRITEANIMSTRUCT_DURATIONOFFSET + oamframe duration
 	ld hl, SPRITEANIMSTRUCT_DURATIONOFFSET
 	add hl, bc
 	add [hl]
+
+	; SPRITEANIMSTRUCT_DURATION = oamframe duration
 	ld hl, SPRITEANIMSTRUCT_DURATION
 	add hl, bc
 	ld [hl], a
 	pop hl
 .okay
+	; Copy bits 7, 6 of oamframe duration into wCurSpriteOAMFlags bits 6, 5
 	ld a, [hl]
 	and Y_FLIP << 1 | X_FLIP << 1 ; The << 1 is compensated in the "oamframe" macro
 	srl a
@@ -477,17 +502,23 @@ GetSpriteAnimFrame:
 	ld [hl], a
 	jr .loop
 
+; Store current oamframe addr. in hl
 .GetPointer:
+	; de <- frameset ID
 	ld hl, SPRITEANIMSTRUCT_FRAMESET_ID
 	add hl, bc
 	ld e, [hl]
 	ld d, 0
+
+	; de <- sprite anim. frameset addr. (see data/sprite_anims/framesets.asm)
 	ld hl, SpriteAnimFrameData
 	add hl, de
 	add hl, de
 	ld e, [hl]
 	inc hl
 	ld d, [hl]
+
+	; hl <- sprite anim. oamframe
 	ld hl, SPRITEANIMSTRUCT_FRAME
 	add hl, bc
 	ld l, [hl]
@@ -496,6 +527,8 @@ GetSpriteAnimFrame:
 	add hl, de
 	ret
 
+; a : oamset number
+; Store current oamset addr. in hl
 GetFrameOAMPointer:
 	ld e, a
 	ld d, 0

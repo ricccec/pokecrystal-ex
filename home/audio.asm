@@ -177,8 +177,8 @@ endr
 	pop hl
 	ret
 
-PlaySFX::
 ; Play sound effect de.
+PlaySFX::
 ; Sound effects are ordered by priority (highest to lowest)
 
 	push hl
