@@ -74,9 +74,14 @@ SplashScreen:
 GameFreakPresentsInit:
 	; Load Game Freak logo tiles in vTiles2
 	ld de, GameFreakLogoGFX
-	ld hl, vTiles2
 	lb bc, BANK(GameFreakLogoGFX), 28
+	ld hl, vTiles2
 	call Get1bpp
+
+	; ld de, CyberDyneLogoGFX
+	; lb bc, BANK(CyberDyneLogoGFX), 144
+	; ld hl, vTiles0
+	; call Get2bpp
 
 	; Switch WRAM bank
 	ldh a, [rSVBK]
@@ -386,5 +391,6 @@ GameFreakDittoPaletteFade:
 INCLUDE "gfx/splash/ditto_fade.pal"
 
 GameFreakLogoGFX:
-INCBIN "gfx/splash/gamefreak_presents.1bpp"
+;INCBIN "gfx/splash/gamefreak_presents.1bpp"
+INCBIN "gfx/splash/gamefreak_presents_edit.1bpp"
 INCBIN "gfx/splash/gamefreak_logo.1bpp"
