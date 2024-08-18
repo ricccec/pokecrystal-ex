@@ -110,8 +110,8 @@ DoNextFrameForFirst16Sprites:
 .done
 	ret
 
-_InitSpriteAnimStruct::
 ; Initialize animation a at pixel x=e, y=d
+_InitSpriteAnimStruct::
 ; Find if there's any room in the wSpriteAnimationStructs array, which is 10x16
 	push de
 	push af

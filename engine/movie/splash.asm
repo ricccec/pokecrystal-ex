@@ -78,45 +78,41 @@ GameFreakPresentsInit:
 	ld hl, vTiles2
 	call Get1bpp
 
-	; ld de, CyberDyneLogoGFX
-	; lb bc, BANK(CyberDyneLogoGFX), 144
-	; ld hl, vTiles0
-	; call Get2bpp
-
 	; Switch WRAM bank
 	ldh a, [rSVBK]
 	push af
 	ld a, BANK(wDecompressScratch)
 	ldh [rSVBK], a
 
-	; Decompress ditto anim. tiles from GameFreakDittoGFX to wDecompressScratch
-	ld hl, GameFreakDittoGFX
+	; Decompress tiles from CyberDyneLogoGFX to wDecompressScratch
+	ld hl, CyberDyneLogoGFX
 	ld de, wDecompressScratch
-	ld a, BANK(GameFreakDittoGFX)
+	ld a, BANK(CyberDyneLogoGFX)
 	call FarDecompress
 
-	; Copy decompressed tiles to vTiles0
+	; Copy the first 128 decompressed tiles to vTiles0
 	ld hl, vTiles0
 	ld de, wDecompressScratch
 	lb bc, 1, $80
 	call Request2bpp
 
-	; Copy decompressed tiles to vTiles1
+	; Copy the next 16 to vTiles1
 	ld hl, vTiles1
 	ld de, wDecompressScratch + $80 tiles
-	lb bc, 1, $80
+	lb bc, 1, $0f
 	call Request2bpp
 
+	; Back to original bank
 	pop af
 	ldh [rSVBK], a
 
 	; Initialize a sprite anim. struct with data from sprite 
-	; anim. obj. SPRITE_ANIM_OBJ_GAMEFREAK_LOGO
+	; anim. obj. SPRITE_ANIM_OBJ_CYBERDYNE_LOGO
 	; The sprite will be drawn at pxl 4 of 10th col and pxl
 	; 0 of 11th row
 	farcall ClearSpriteAnims							; Clear WRAM wSpriteAnimData
 	depixel 10, 11, 4, 0								; de <- Pxl 4 of 10th col | pxl 0 of 11th row
-	ld a, SPRITE_ANIM_OBJ_GAMEFREAK_LOGO
+	ld a, SPRITE_ANIM_OBJ_CYBERDYNE_LOGO
 	call InitSpriteAnimStruct
 
 	; Initialize more fields of the struct
@@ -391,6 +387,5 @@ GameFreakDittoPaletteFade:
 INCLUDE "gfx/splash/ditto_fade.pal"
 
 GameFreakLogoGFX:
-;INCBIN "gfx/splash/gamefreak_presents.1bpp"
-INCBIN "gfx/splash/gamefreak_presents_edit.1bpp"
+INCBIN "gfx/splash/gamefreak_presents.1bpp"
 INCBIN "gfx/splash/gamefreak_logo.1bpp"

@@ -11,7 +11,7 @@ SpriteAnimFrameData:
 	dw .Frameset_GSTitleTrail
 	dw .Frameset_TextEntryCursor
 	dw .Frameset_TextEntryCursorBig
-	dw .Frameset_GameFreakLogo
+	dw .Frameset_CyberdyneLogo
 	dw .Frameset_GSGameFreakLogoStar
 	dw .Frameset_GSGameFreakLogoSparkle
 	dw .Frameset_SlotsGolem
@@ -139,7 +139,7 @@ SpriteAnimFrameData:
 	oamwait 1
 	oamrestart
 
-.Frameset_GameFreakLogo:
+.Frameset_CyberdyneLogo:
 	oamframe SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_1,  12
 	oamframe SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_2,   1
 	oamframe SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_3,   1

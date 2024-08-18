@@ -41,11 +41,7 @@ INCBIN "gfx/splash/copyright.2bpp"
 
 SECTION "Intro Logo", ROMX
 
-GameFreakDittoGFX::
-; INCBIN "gfx/splash/ditto.2bpp.lz"
-
 CyberDyneLogoGFX::
-;  INCBIN "gfx/splash/logo_cd_small.2bpp"
 INCBIN "gfx/splash/logo_cd_small.2bpp.lz"
 
 SECTION "Unown Font", ROMX

@@ -23,7 +23,7 @@ DoSpriteAnimFrame:
 	dw SpriteAnimFunc_PartyMonSelected
 	dw SpriteAnimFunc_GSTitleTrail
 	dw SpriteAnimFunc_NamingScreenCursor
-	dw SpriteAnimFunc_GameFreakLogo
+	dw SpriteAnimFunc_CyberdyneLogo
 	dw SpriteAnimFunc_GSGameFreakLogoStar
 	dw SpriteAnimFunc_GSGameFreakLogoSparkle
 	dw SpriteAnimFunc_SlotsGolem
@@ -224,7 +224,7 @@ SpriteAnimFunc_MailCursor:
 	callfar ComposeMail_AnimateCursor
 	ret
 
-SpriteAnimFunc_GameFreakLogo:
+SpriteAnimFunc_CyberdyneLogo:
 	callfar GameFreakLogoSpriteAnim
 	ret
 
