@@ -72,6 +72,10 @@ SplashScreen:
 	ret
 
 GameFreakPresentsInit:
+	; White background
+	ld b, SCGB_CD_LOGO	
+	call GetSGBLayout
+
 	; Load Game Freak logo tiles in vTiles2
 	ld de, GameFreakLogoGFX
 	lb bc, BANK(GameFreakLogoGFX), 28

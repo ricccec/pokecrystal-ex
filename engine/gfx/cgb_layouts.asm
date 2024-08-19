@@ -6,17 +6,17 @@ CheckCGB:
 	ret
 
 LoadSGBLayoutCGB:
-	ld a, b			; b contains the layout index
+	ld a, b									; b contains the layout index
 	cp SCGB_DEFAULT
 	jr nz, .not_default
-	ld a, [wDefaultSGBLayout]
+	ld a, [wDefaultSGBLayout]				; Use default layout
 .not_default
 	cp SCGB_PARTY_MENU_HP_BARS
 	jp z, CGB_ApplyPartyMenuHPPals
 	call ResetBGPals
 
 	; a contains the layout index
-	; hl <- [SGBLayoutJumptable + a]
+	; hl <- [CGBLayoutJumptable + a]
 	ld l, a
 	ld h, 0
 	add hl, hl
@@ -66,12 +66,23 @@ CGBLayoutJumptable:
 	dw _CGB_BillsPC
 	dw _CGB_UnownPuzzle
 	dw _CGB_GamefreakLogo
+	dw _CGB_CyberdyneLogo
 	dw _CGB_PlayerOrMonFrontpicPals
 	dw _CGB_TradeTube
 	dw _CGB_TrainerOrMonFrontpicPals
 	dw _CGB_MysteryGift
 	dw _CGB_Unused1E
 	assert_table_length NUM_SCGB_LAYOUTS
+
+_CGB_CyberdyneLogo:
+	; Copy palette PREDEFPAL_GAMEFREAK_LOGO_BG to palette 1 of wBGPals1
+	ld a, PREDEFPAL_ROUTES
+	call GetPredefPal			; hl <- PredefPals + 3*a
+	ld de, wBGPals1				; de points to wBGPals1 in WRAM
+	call LoadHLPaletteIntoDE
+
+	call ApplyPals		; Copy palettes wBGPals1 and wOBPals1 to wBGPals2 and wOBPals2
+	ret 
 
 _CGB_BattleGrayscale:
 	ld hl, PalPacket_BattleGrayscale + 1
@@ -883,7 +894,7 @@ _CGB_MagnetTrain: ; unused
 
 _CGB_GamefreakLogo:
 
-	; Copy palette PREDEFPAL_GAMEFREAK_LOGO_BG to wBGPals1
+	; Copy palette PREDEFPAL_GAMEFREAK_LOGO_BG to palette 1 of wBGPals1
 	ld de, wBGPals1				; de points to wBGPals1 in WRAM
 	ld a, PREDEFPAL_GAMEFREAK_LOGO_BG
 	call GetPredefPal			; hl <- PredefPals + 3*a
@@ -899,7 +910,7 @@ _CGB_GamefreakLogo:
 	ld de, wOBPals1 palette 1	; de pointd to wOBPals1 (palette 1) in WRAM
 	call LoadHLPaletteIntoDE
 
-	call WipeAttrmap	; Clear wAttrmap (bg tiles attributes)
+	call WipeAttrmap	; Clear wAttrmap (attributes of bg tiles)
 	call ApplyAttrmap	; Copy BG tiles attributes from wAttrMap to vBGMap2
 	call ApplyPals		; Copy palettes wBGPals1 and wOBPals1 to wBGPals2 and wOBPals2
 	ret

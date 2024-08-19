@@ -59,12 +59,17 @@ SGBLayoutJumptable:
 	dw .SGB_BillsPC
 	dw .SGB_UnownPuzzle
 	dw .SGB_GamefreakLogo
+	dw .SGB_CyberdyneLogo
 	dw .SGB_PlayerOrMonFrontpicPals
 	dw .SGB_TradeTube
 	dw .SGB_TrainerOrMonFrontpicPals
 	dw .SGB_MysteryGift
 	dw .SGB_Unused1E
 	assert_table_length NUM_SCGB_LAYOUTS
+
+.SGB_CyberdyneLogo:
+	; TODO
+	ret
 
 .SGB_BattleGrayscale:
 	ld hl, PalPacket_BattleGrayscale
