@@ -103,7 +103,7 @@ GameFreakPresentsInit:
 	; Copy the next 16 to vTiles1
 	ld hl, vTiles1
 	ld de, wDecompressScratch + $80 tiles
-	lb bc, 1, $0f
+	lb bc, 1, $80
 	call Request2bpp
 
 	; Back to original bank
@@ -115,7 +115,7 @@ GameFreakPresentsInit:
 	; The sprite will be drawn at pxl 4 of 10th row and pxl
 	; 0 of 11th row
 	farcall ClearSpriteAnims							; Clear WRAM wSpriteAnimData
-	depixel 10, 0, 4, 0								; de <- Pxl 4 of 10th row | pxl 0 of 11th col
+	depixel 10, 1, 4, 2								; de <- Pxl 4 of 10th row | pxl 0 of 11th col
 	ld a, SPRITE_ANIM_OBJ_CYBERDYNE_LOGO
 	call InitSpriteAnimStruct
 
