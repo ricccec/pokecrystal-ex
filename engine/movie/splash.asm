@@ -268,27 +268,44 @@ GameFreakLogo_Init:
 	ret
 
 GameFreakLogo_Bounce:
-; Bounce with a height of 0C, 0C / 48 times.
+; Bounce with a height of 0C. Bounce 0C / 48 times.
 ; By default, this is twice, with a height of 96 pixels and 48 pixels.
+; sine offset is decreased by 1 at each step. Once it reaches 32, we know 
+; Ditto has touched the ground and the jump heigth for the next jump is
+; decreased by 48. The animation ends when jump heigth reaches 0. 
 ; Sine offset starts at 48 (32+32/2, or pi+pi/2), so it starts at the maximum
 ; value of the sine wave (i.e. the top of the screen).
 
+	; Have we reached height=0?
 	ld hl, SPRITEANIMSTRUCT_VAR1 ; jump height
 	add hl, bc
 	ld a, [hl]
 	and a
-	jr z, .done	; Reached height=0?
+	jr z, .done		; height==0
 
 ; Load the sine offset, make sure it doesn't reach the negative part of the wave
 	ld d, a						; d <- prev. height
+	; a <- Sine offset
 	ld hl, SPRITEANIMSTRUCT_VAR2 ; sine offset
 	add hl, bc
 	ld a, [hl]
+; Keep in mind that we are not interested in offset values where sin is negative,
+; i.e. between 32 and 63. To skip these values we simply add 32 to the offset every
+; time it falls within this range - and THEN we compute the sin.
+; In other words:
+;	- Offset starts at pi/2 (max height)
+;	- It's decreased at every iteration
+;	- Between pi/2 and 0, the height decreases
+;	- Once it reaches 0 (min height), offset jumps back to 0+pi=pi
+;	- Between pi and pi/2, the height increases again 
+	; Since sin is periodic, we are only interested in the 6 LSBs of the offset - i.e.
+	; a ranges from 0 to 63 (0x3f), or from 0 to 2pi
 	and $3f ; full circle = 2*pi = 2*32
 	cp 32
-	jr nc, .no_negative
+	jr nc, .no_negative	; a%64 >= 32
 	add 32
 .no_negative
+	; Update the y offset of the sprite: 
 	; SPRITEANIMSTRUCT_YOFFSET = d * sin(offset * pi/32)
 	ld e, a
 	farcall BattleAnim_Sine_e ; e = d * sin(e * pi/32)
@@ -302,7 +319,7 @@ GameFreakLogo_Bounce:
 	ld a, [hl]
 	dec [hl]
 	and $1f ; a%32 == 0
-	ret nz
+	jr nz, .not_on_ground
 
 ; If the ditto's reached the ground, decrement the jump height and play the sfx
 	ld hl, SPRITEANIMSTRUCT_VAR1 ; jump height
@@ -314,6 +331,12 @@ GameFreakLogo_Bounce:
 	call PlaySFX
 	ret
 
+.not_on_ground
+	ld hl, SPRITEANIMSTRUCT_XOFFSET
+	add hl, bc
+	inc [hl]
+	ret nz
+
 .done
 	; Increment scene index
 	ld hl, SPRITEANIMSTRUCT_JUMPTABLE_INDEX
@@ -323,7 +346,7 @@ GameFreakLogo_Bounce:
 	ld hl, SPRITEANIMSTRUCT_VAR2
 	add hl, bc
 	ld [hl], 0
-	; Request SFX
+	; Play SFX
 	ld de, SFX_DITTO_POP_UP
 	call PlaySFX
 	ret
