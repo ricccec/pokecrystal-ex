@@ -112,10 +112,10 @@ GameFreakPresentsInit:
 
 	; Initialize a sprite anim. struct with data from sprite 
 	; anim. obj. SPRITE_ANIM_OBJ_CYBERDYNE_LOGO
-	; The sprite will be drawn at pxl 4 of 10th col and pxl
+	; The sprite will be drawn at pxl 4 of 10th row and pxl
 	; 0 of 11th row
 	farcall ClearSpriteAnims							; Clear WRAM wSpriteAnimData
-	depixel 10, 9, 4, 4								; de <- Pxl 4 of 10th row | pxl 0 of 11th col
+	depixel 10, 0, 4, 0								; de <- Pxl 4 of 10th row | pxl 0 of 11th col
 	ld a, SPRITE_ANIM_OBJ_CYBERDYNE_LOGO
 	call InitSpriteAnimStruct
 
@@ -325,7 +325,7 @@ GameFreakLogo_Bounce:
 	ld hl, SPRITEANIMSTRUCT_VAR1 ; jump height
 	add hl, bc
 	ld a, [hl]
-	sub 48
+	sub 32
 	ld [hl], a
 	ld de, SFX_DITTO_BOUNCE
 	call PlaySFX
