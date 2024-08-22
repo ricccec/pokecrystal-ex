@@ -20,12 +20,12 @@ FillBoxWithByte::
 	ret
 
 	
-; Fill wTilemap with blank tiles.
+; Fill wTilemap and vBGMap0 with " "
 ClearTilemap::
 
- 	; Fills Tilemap with " "
+ 	; Fills WRAM Tilemap with " "
 	; The wram space reserved for the tilemap is between wTilemap and wTilemapEnd
-	hlcoord 0, 0
+	hlcoord 0, 0							; hl points to wTilemap
 	ld a, " "
 	ld bc, wTilemapEnd - wTilemap
 	call ByteFill

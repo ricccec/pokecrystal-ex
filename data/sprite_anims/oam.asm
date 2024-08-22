@@ -136,7 +136,7 @@ SpriteAnimOAMData:
 	spriteanimoam $80, .OAMData_IntroSuicuneAway         ; SPRITE_ANIM_OAMSET_INTRO_SUICUNE_AWAY
 	spriteanimoam $00, .OAMData_Celebi                   ; SPRITE_ANIM_OAMSET_CELEBI_1
 	spriteanimoam $04, .OAMData_Celebi                   ; SPRITE_ANIM_OAMSET_CELEBI_2
-	spriteanimoam $d0, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_1
+	spriteanimoam $0c, .OAMData_Cyberdynelogo_ball       ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_1
 	spriteanimoam $d3, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_2
 	spriteanimoam $d6, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_3
 	spriteanimoam $6c, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_4
@@ -1133,3 +1133,18 @@ SpriteAnimOAMData:
 	dbsprite -1,  0,  4,  0, $51, 1
 	dbsprite  0,  0,  4,  0, $52, 1
 	dbsprite  1,  0,  4,  0, $53, 1
+
+.OAMData_Cyberdynelogo_ball:
+	db 12
+	dbsprite  0,  0,  0,  0, $00, 1
+	dbsprite  1,  0,  0,  0, $01, 1
+	dbsprite  2,  0,  0,  0, $02, 1
+	dbsprite  0,  1,  0,  0, $10, 1
+	dbsprite  1,  1,  0,  0, $11, 1
+	dbsprite  2,  1,  0,  0, $12, 1
+	dbsprite  0,  2,  0,  0, $20, 1
+	dbsprite  1,  2,  0,  0, $21, 1
+	dbsprite  2,  2,  0,  0, $22, 1
+	dbsprite  0,  3,  0,  0, $30, 1
+	dbsprite  1,  3,  0,  0, $31, 1
+	dbsprite  2,  3,  0,  0, $32, 1

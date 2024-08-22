@@ -205,6 +205,7 @@ ClearPalettes::
 
 GetMemSGBLayout::
 	ld b, SCGB_DEFAULT
+; b : layout index
 GetSGBLayout::
 ; load sgb packets unless dmg
 
