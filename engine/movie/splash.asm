@@ -257,6 +257,7 @@ GameFreakLogoSpriteAnim:
 	dw GameFreakLogo_Init
 	dw GameFreakLogo_Bounce
 	dw GameFreakLogo_Ditto
+	dw GameFreakLogo_Blink
 	dw GameFreakLogo_Transform
 	dw GameFreakLogo_Done
 
@@ -357,17 +358,49 @@ GameFreakLogo_Ditto:
 	add hl, bc
 	ld a, [hl]
 	cp 32
-	jr nc, .start_transform
+	jr nc, .start_blink
 	inc [hl]
 	ret
 
-.start_transform
+.start_blink
+	; Increment scene index
 	ld hl, SPRITEANIMSTRUCT_JUMPTABLE_INDEX
 	add hl, bc
 	inc [hl]
+	; Reset var2 (frame count)
 	ld hl, SPRITEANIMSTRUCT_VAR2
 	add hl, bc
 	ld [hl], 0
+	; Play SFX
+	ld de, SFX_INTRO_PICHU
+	call PlaySFX
+	ret
+
+GameFreakLogo_Blink:
+	ld hl, SPRITEANIMSTRUCT_VAR2 ; frame count
+	add hl, bc
+	ld a, [hl]
+	cp 68
+	jr nc, .start_transform
+	inc [hl]
+	cp 24
+	jr nz, .done
+	; Play SFX
+	ld de, SFX_INTRO_PICHU
+	call PlaySFX
+.done
+	ret
+
+.start_transform
+	; Increment scene index
+	ld hl, SPRITEANIMSTRUCT_JUMPTABLE_INDEX
+	add hl, bc
+	inc [hl]
+	; Reset var2 (frame count)
+	ld hl, SPRITEANIMSTRUCT_VAR2
+	add hl, bc
+	ld [hl], 0
+	; Play SFX
 	ld de, SFX_DITTO_TRANSFORM
 	call PlaySFX
 	ret
