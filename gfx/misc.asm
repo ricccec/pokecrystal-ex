@@ -42,7 +42,7 @@ INCBIN "gfx/splash/copyright.2bpp"
 SECTION "Intro Logo", ROMX
 
 CyberDyneLogoGFX::
-INCBIN "gfx/splash/ditto.2bpp.lz"
+INCBIN "gfx/splash/ditto_blink.2bpp.lz"
 
 SECTION "Unown Font", ROMX
 

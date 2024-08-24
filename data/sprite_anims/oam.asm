@@ -136,9 +136,9 @@ SpriteAnimOAMData:
 	spriteanimoam $80, .OAMData_IntroSuicuneAway         ; SPRITE_ANIM_OAMSET_INTRO_SUICUNE_AWAY
 	spriteanimoam $00, .OAMData_Celebi                   ; SPRITE_ANIM_OAMSET_CELEBI_1
 	spriteanimoam $04, .OAMData_Celebi                   ; SPRITE_ANIM_OAMSET_CELEBI_2
-	spriteanimoam $d0, .OAMData_GameFreakLogo1_3       ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_1
-	spriteanimoam $d3, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_2
-	spriteanimoam $d6, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_3
+	spriteanimoam $d3, .OAMData_GameFreakLogo1_3       ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_1
+	spriteanimoam $d6, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_2
+	spriteanimoam $d9, .OAMData_GameFreakLogo1_3         ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_3
 	spriteanimoam $6c, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_4
 	spriteanimoam $68, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_5
 	spriteanimoam $64, .OAMData_GameFreakLogo4_11        ; SPRITE_ANIM_OAMSET_GAMEFREAK_LOGO_6
