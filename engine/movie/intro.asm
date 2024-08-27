@@ -171,37 +171,45 @@ IntroScene2:
 
 IntroScene3:
 ; More setup. Transition to the outdoor scene.
-	call Intro_ClearBGPals
+	call Intro_ClearBGPals					; Clear wBGPals2 and wOBPals2
 	call ClearSprites
 	call ClearTilemap
 	xor a
 	ldh [hBGMapMode], a
+	
 	ld a, $1
 	ldh [rVBK], a
 	ld hl, IntroBackgroundAttrmap
 	debgcoord 0, 0
 	call Intro_DecompressRequest2bpp_64Tiles
+	
 	ld a, $0
 	ldh [rVBK], a
 	ld hl, IntroBackgroundGFX
 	ld de, vTiles2 tile $00
 	call Intro_DecompressRequest2bpp_128Tiles
+
 	ld hl, IntroBackgroundTilemap
 	debgcoord 0, 0
 	call Intro_DecompressRequest2bpp_64Tiles
+	
+	; Init palettes
 	ldh a, [rSVBK]
 	push af
+	; Copy IntroBackgroundPalette into wBGPals1 and wOBPals1
 	ld a, BANK(wBGPals1)
 	ldh [rSVBK], a
 	ld hl, IntroBackgroundPalette
 	ld de, wBGPals1
 	ld bc, 16 palettes
 	call CopyBytes
+	; Copy IntroBackgroundPalette into wBGPals2 and wOBPals2
 	ld hl, IntroBackgroundPalette
 	ld de, wBGPals2
 	ld bc, 16 palettes
 	call CopyBytes
 	pop af
+
 	ldh [rSVBK], a
 	xor a
 	ldh [hSCX], a
@@ -211,7 +219,7 @@ IntroScene3:
 	ld a, SCREEN_HEIGHT_PX
 	ldh [hWY], a
 	call Intro_ResetLYOverrides
-	call Intro_SetCGBPalUpdate
+	call Intro_SetCGBPalUpdate				; Request palette update
 	xor a
 	ld [wIntroSceneFrameCounter], a
 	call NextIntroScene
@@ -1238,6 +1246,7 @@ CrystalIntro_UnownFade:
 	add hl, de
 	inc hl
 	inc hl
+	; a <- Count up to 31 (0b011111), then down to 0, then up again, ... 
 	ld a, [wIntroSceneTimer]
 	and %111111
 	cp %011111
@@ -1254,7 +1263,7 @@ CrystalIntro_UnownFade:
 	push af
 	ld a, BANK(wBGPals2)
 	ldh [rSVBK], a
-
+	; Reset BGPals2
 	push hl
 	push bc
 	ld hl, wBGPals2
@@ -1265,13 +1274,15 @@ CrystalIntro_UnownFade:
 	pop hl
 
 	push hl
+	; Pick a shade of gray based on the index that moves back and forth from 0 to 31
 	ld hl, .BWFade
 	add hl, bc
 	add hl, bc
 	ld a, [hli]
 	ld d, [hl]
 	ld e, a
-	pop hl
+	; Write the shade in the palette
+	pop hl	; Palette in wBGPals2
 	ld a, e
 	ld [hli], a
 	ld a, d

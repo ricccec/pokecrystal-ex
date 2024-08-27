@@ -170,6 +170,7 @@ GameFreakPresentsScene:
 	dw GameFreakPresents_PlaceGameFreak
 	dw GameFreakPresents_PlacePresents
 	dw GameFreakPresents_WaitForTimer
+	dw GameFreakPresents_FadeOut
 
 GameFreakPresents_NextScene:
 	ld hl, wJumptableIndex
@@ -229,9 +230,54 @@ GameFreakPresents_WaitForTimer:
 	ld hl, wIntroSceneTimer
 	ld a, [hl]
 	cp 128
-	jr nc, .finish
+	jr nc, .start_fade
 	inc [hl]
 	ret
+	
+.start_fade
+	ld [hl], 0
+	call GameFreakPresents_NextScene
+	ret
+
+GameFreakPresents_FadeOut:
+	; Fade done?
+	ld hl, wIntroSceneTimer
+	ld a, [hl]
+	cp 31
+	jr nc, .finish
+	inc [hl]
+
+	; Update color 1 of the 1st BG palette
+	ldh a, [rSVBK]
+	push af
+	ld a, BANK(wBGPals2)
+	ldh [rSVBK], a
+	; 
+	ld a, [wIntroSceneTimer]
+	and %011111
+	ld c, a
+	ld b, 0
+	; Pick th ecolor based on the scene timer
+	ld hl, .BWFade
+	add hl, bc
+	add hl, bc
+	ld a, [hli]
+	ld b, [hl]
+	ld hl, (wBGPals2 palette 0)
+	ld [hli], a
+	ld [hl], b
+
+	pop af
+	ldh [rSVBK], a
+	ld a, TRUE
+	ldh [hCGBPalUpdate], a					; Request palette update
+	ret 
+
+.BWFade:
+	; Fade between black and white.
+	for hue, 32
+		RGB (31 - hue), (31 - hue), (31 - hue)
+	endr
 
 .finish
 	ld hl, wJumptableIndex
@@ -423,16 +469,17 @@ GameFreakLogo_Transform:
 	add hl, de
 	ldh a, [rSVBK]
 	push af
+	; Update color 3 of the 2nd palette
 	ld a, BANK(wOBPals2)
 	ldh [rSVBK], a
 	ld a, [hli]
-	ld [wOBPals2 + 12], a
+	ld [wOBPals2 + 12], a					; 2nd palette, 5th byte
 	ld a, [hli]
-	ld [wOBPals2 + 13], a
+	ld [wOBPals2 + 13], a					; 2nd palette, 6th byte
 	pop af
 	ldh [rSVBK], a
 	ld a, TRUE
-	ldh [hCGBPalUpdate], a
+	ldh [hCGBPalUpdate], a					; Request palette update
 	ret
 
 .done
