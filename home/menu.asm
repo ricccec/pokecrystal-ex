@@ -117,6 +117,8 @@ RestoreTileBackup::
 
 	ret
 
+; hl : windows stack head
+; Copy the menu header pointed by hl into the wMenuHeader WRAM section
 PopWindow::
 	ld b, wMenuHeaderEnd - wMenuHeader
 	ld de, wMenuHeader
@@ -141,6 +143,7 @@ GetMenuBoxDims::
 	ld c, a
 	ret
 
+; Copies menu data pointed by wMenuDataPointer into the WRAM wMenuData section
 CopyMenuData::
 	push hl
 	push de
@@ -205,8 +208,9 @@ PlaceVerticalMenuItems::
 	jp PlaceString
 
 MenuBox::
-	call MenuBoxCoord2Tile
-	call GetMenuBoxDims
+	call MenuBoxCoord2Tile					; hl <- Menu top-left corner
+	call GetMenuBoxDims						; b <- Menu height
+											; c <- Menu width
 	dec b
 	dec c
 	jp Textbox
@@ -550,31 +554,40 @@ MenuWriteText::
 	ldh [hOAMUpdate], a
 	ret
 
+; Compute wMenuBorderBottomCoord based on the number of items in the menu
 AutomaticGetMenuBottomCoord::
+	; c <- Menu width
 	ld a, [wMenuBorderLeftCoord]
 	ld c, a
 	ld a, [wMenuBorderRightCoord]
 	sub c
 	ld c, a
+	; b <- 2*wMenuDataItems + 1
 	ld a, [wMenuDataItems]
 	add a
 	inc a
 	ld b, a
+	; wMenuBorderBottomCoord <- b + wMenuBorderTopCoord
 	ld a, [wMenuBorderTopCoord]
 	add b
 	ld [wMenuBorderBottomCoord], a
 	ret
 
+; de <- Menu items addr.
+; wMenuDataItems <- Num. of items
 GetMenuIndexSet::
+	; hl <- data indices addr.
 	ld hl, wMenuDataIndicesPointer
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
+	; b <- index set
 	ld a, [wWhichIndexSet]
 	and a
-	jr z, .skip
+	jr z, .skip								; Default index
 	ld b, a
 	ld c, -1
+	; Move hl to the first byte of the selected index
 .loop
 	ld a, [hli]
 	cp c
@@ -583,8 +596,10 @@ GetMenuIndexSet::
 	jr nz, .loop
 
 .skip
+	; Copy hl into de
 	ld d, h
 	ld e, l
+	; The first byte contains the number of items
 	ld a, [hl]
 	ld [wMenuDataItems], a
 	ret
@@ -768,10 +783,12 @@ ClearWindowData::
 	ld a, BANK(wWindowStack)
 	ldh [rSVBK], a
 
+	; Clear the bottom of the window stack
 	xor a
 	ld hl, wWindowStackBottom
 	ld [hld], a
 	ld [hld], a
+	; Reset the stack head
 	ld a, l
 	ld [wWindowStackPointer], a
 	ld a, h

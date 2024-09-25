@@ -662,6 +662,10 @@ _ExitMenu::
 	ld a, BANK(wWindowStack)
 	ldh [rSVBK], a
 
+	; Pop the top-most menu header from the windows stack
+	; The two bytes on the top of the stack should be the
+	; address of the window that's right under the active
+	; one. They are used to update wWindowStackPointer
 	call GetWindowStackTop
 	ld a, l
 	or h
@@ -670,6 +674,7 @@ _ExitMenu::
 	ld [wWindowStackPointer], a
 	ld a, h
 	ld [wWindowStackPointer + 1], a
+	
 	call PopWindow
 	ld a, [wMenuFlags]
 	bit 0, a

@@ -17,18 +17,21 @@ _TitleScreen:
 ; Turn LCD off
 	call DisableLCD
 
+; --------------------------------------------------
 ; VRAM bank 1
+; In this bank, vBGMap0 and vBGMap1 are the TILEMAP PARAMETERS AREA
+
 	ld a, 1
 	ldh [rVBK], a
 
 ; Decompress running Suicune gfx
 	ld hl, TitleSuicuneGFX
-	ld de, vTiles1
+	ld de, vTiles1		; Since LCD is disable, we can write the tiles in VRAM directly
 	call Decompress
 
-; Clear screen palettes
+; Clear vBGMap0
 	hlbgcoord 0, 0
-	ld bc, 20 * BG_MAP_WIDTH
+	ld bc, 20 * BG_MAP_WIDTH				; 20 screen rows
 	xor a
 	call ByteFill
 
@@ -83,6 +86,9 @@ _TitleScreen:
 	ld bc, 6 * BG_MAP_WIDTH ; the rest of the screen
 	ld a, 0 | VRAM_BANK_1
 	call ByteFill
+
+; --------------------------------------------------
+; VRAM bank 0
 
 ; Back to VRAM bank 0
 	ld a, 0

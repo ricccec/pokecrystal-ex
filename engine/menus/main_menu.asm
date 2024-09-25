@@ -358,6 +358,8 @@ MainMenu_PrintCurrentTimeAndDay:
 .Day:
 	db "DAY@"
 
+; Clears wTilemap, loads text tiles in vTiles1 and vTiles3, clears
+; the menu data in WRAM and resets the window stack
 ClearTilemapEtc:
 	xor a
 	ldh [hMapAnims], a
