@@ -996,6 +996,7 @@ StartTitleScreen:
 	res rLCDC_SPRITE_SIZE, [hl] ; 8x8
 	call ClearScreen
 	call WaitBGMap2
+	; Init hRAM
 	xor a
 	ldh [hLCDCPointer], a
 	ldh [hSCX], a
@@ -1004,6 +1005,7 @@ StartTitleScreen:
 	ldh [hWX], a
 	ld a, $90
 	ldh [hWY], a
+	; Load diploma.pal in wBGPals1
 	ld b, SCGB_DIPLOMA
 	call GetSGBLayout
 	call UpdateTimePals
@@ -1059,7 +1061,9 @@ UnusedTitlePerspectiveScroll: ; unreferenced
 	call ByteFill
 	ret
 
+; a : wJumptableIndex
 TitleScreenScene:
+; Jump to one of the scene functions based on a
 	ld e, a
 	ld d, 0
 	ld hl, .scenes
