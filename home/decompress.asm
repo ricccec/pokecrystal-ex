@@ -1,5 +1,5 @@
-FarDecompress::
 ; Decompress graphics data from a:hl to de.
+FarDecompress::
 
 	ld [wLZBank], a
 	ldh a, [hROMBank]
@@ -13,6 +13,7 @@ FarDecompress::
 	rst Bankswitch
 	ret
 
+; decompresses graphics data from hl to de.
 Decompress::
 ; Pokemon GSC uses an lz variant (lz3) for compression.
 ; This is mainly (but not necessarily) used for graphics.

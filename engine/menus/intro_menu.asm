@@ -974,6 +974,7 @@ IntroSequence:
 	; fallthrough
 
 StartTitleScreen:
+	; REMOVE
 	ldh a, [rSVBK]
 	push af
 	ld a, BANK(wLYOverrides)

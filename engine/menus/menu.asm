@@ -559,13 +559,13 @@ _PushWindow::
 	push af
 	ld a, BANK(wWindowStack)
 	ldh [rSVBK], a
-
+	; de <- head of the windows stack
 	ld hl, wWindowStackPointer
 	ld e, [hl]
 	inc hl
 	ld d, [hl]
-	push de
-
+	push de 								; Push curr. win. stack head
+	; Push wMenuHeader in the windows stack
 	ld b, wMenuHeaderEnd - wMenuHeader
 	ld hl, wMenuHeader
 .loop
@@ -574,6 +574,7 @@ _PushWindow::
 	dec de
 	dec b
 	jr nz, .loop
+	; Done pushing
 
 ; If bit 6 or 7 of the menu flags is set, set bit 0 of the address
 ; at 7:[wWindowStackPointer], and draw the menu using the coordinates from the header.
@@ -584,13 +585,17 @@ _PushWindow::
 	bit 7, a
 	jr z, .not_bit_7
 
-.bit_6
+.bit_6										; Bit 6 or 7 is set
+	; Set bit 0 of wWindowStackPointer
+	; At this point wWindowStackPointer points to the first byte (the flag byte) of the
+	; menu header that we've just pushed
 	ld hl, wWindowStackPointer
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
 	set 0, [hl]
-	call MenuBoxCoord2Tile
+	
+	call MenuBoxCoord2Tile					; hl <- wTilemap addr. of the top-left corner
 	call .copy
 	call MenuBoxCoord2Attr
 	call .copy
@@ -605,6 +610,7 @@ _PushWindow::
 	res 0, [hl]
 
 .done
+	; Update wWindowStackPointer
 	pop hl
 	call .ret ; empty function
 	ld a, h
@@ -620,11 +626,17 @@ _PushWindow::
 
 	pop af
 	ldh [rSVBK], a
+	; Update wWindowStackSize
 	ld hl, wWindowStackSize
 	inc [hl]
 	ret
 
+; Pushes all the bytes of the menu from wTilemap/wAttrmap to the windows stack 
+; hl : wTilemap/wAttrmap addr top-left corner
+; de : head of the window stack 
 .copy
+	; b <- menu height + 1 
+	; c <- menu width + 1
 	call GetMenuBoxDims
 	inc b
 	inc c

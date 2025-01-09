@@ -128,6 +128,8 @@ PopWindow::
 	jr nz, .loop
 	ret
 
+; b <- menu height
+; c <- menu width 
 GetMenuBoxDims::
 	ld a, [wMenuBorderTopCoord] ; top
 	ld b, a
@@ -159,6 +161,9 @@ CopyMenuData::
 	pop hl
 	ret
 
+; The first 2 bytes of the win. stack contain the address of the window
+; right below the active one
+; hl <- addr of prev. window data in the win. stack  
 GetWindowStackTop::
 	ld hl, wWindowStackPointer
 	ld a, [hli]
@@ -252,6 +257,7 @@ ClearWholeMenuBox::
 	call ClearBox
 	ret
 
+; Returns the wTilemap tile address of the top-left corner in hl
 MenuBoxCoord2Tile::
 	ld a, [wMenuBorderLeftCoord]
 	ld c, a
@@ -280,6 +286,7 @@ Coord2Tile::
 	add hl, bc
 	ret
 
+; Returns the wAttrmap tile address of the top-left corner in hl
 MenuBoxCoord2Attr::
 	ld a, [wMenuBorderLeftCoord]
 	ld c, a
@@ -308,6 +315,7 @@ Coord2Attr:: ; unreferenced
 	add hl, bc
 	ret
 
+; hl : menu header definition
 LoadMenuHeader::
 	call CopyMenuHeader
 	call PushWindow
