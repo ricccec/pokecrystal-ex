@@ -226,6 +226,8 @@ ReplaceTimeOfDayPals:
 	dc DARKNESS_F, NITE_F,     DAY_F,      MORN_F
 	dc DARKNESS_F, NITE_F,     DAY_F,      MORN_F
 
+; Store the palette id for the current time of day
+; in a, based on the time of day stored in wTimeOfDay
 GetTimePalette:
 	jumptable .TimePalettes, wTimeOfDay
 
