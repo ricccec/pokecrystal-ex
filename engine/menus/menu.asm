@@ -492,7 +492,17 @@ _2DMenuInterpretJoypad:
 	xor a
 	ret
 
+; Writes "▶" to wTilemap at the current cursor position
+; Uses the following vars:
+;	wCursorCurrentTile: wTilemap addr. of the cursor's prev. tile
+;	wCursorOffCharacter: character used to "erease" the cursor from it's prev. tile
+;	w2DMenuCursorInitY: cursor's initial row
+;	w2DMenuCursorInitX: cursor's initial col
+;	w2DMenuCursorOffsets: 
+;	wMenuCursorY: cursor offset from w2DMenuCursorInitY
+;	wMenuCursorX
 Move2DMenuCursor:
+	; a ‹- wTilemap addr. of the cursor current tile
 	ld hl, wCursorCurrentTile
 	ld a, [hli]
 	ld h, [hl]
@@ -500,14 +510,20 @@ Move2DMenuCursor:
 	ld a, [hl]
 	cp "▶"
 	jr nz, Place2DMenuCursor
+	; Overwrite the tile according to wCursorOffCharacter
 	ld a, [wCursorOffCharacter]
 	ld [hl], a
 Place2DMenuCursor:
+	; hl ‹- Addr. of initial cursor position in wTilemap
 	ld a, [w2DMenuCursorInitY]
 	ld b, a
 	ld a, [w2DMenuCursorInitX]
 	ld c, a
 	call Coord2Tile
+	; Move tile addr. to the correct row 
+	; c ‹- High nibble of w2DMenuCursorOffsets
+	; b ‹- wMenuCursorY
+	; a ‹- c*(b-1)
 	ld a, [w2DMenuCursorOffsets]
 	swap a
 	and $f
@@ -523,8 +539,10 @@ Place2DMenuCursor:
 	jr nz, .row_loop
 
 .got_row
+	; hl ‹- hl + a*SCREEN_WIDTH
 	ld c, SCREEN_WIDTH
 	call AddNTimes
+	; Move tile addr. to the right col.
 	ld a, [w2DMenuCursorOffsets]
 	and $f
 	ld c, a
@@ -541,6 +559,7 @@ Place2DMenuCursor:
 .got_col
 	ld c, a
 	add hl, bc
+	; Update wTilemap and wCursorOffCharacter
 	ld a, [hl]
 	cp "▶"
 	jr z, .cursor_on
@@ -548,6 +567,7 @@ Place2DMenuCursor:
 	ld [hl], "▶"
 
 .cursor_on
+	; wCursorCurrentTile <- cursor tile addr. in wTilemap
 	ld a, l
 	ld [wCursorCurrentTile], a
 	ld a, h
@@ -611,7 +631,7 @@ _PushWindow::
 
 .done
 	; Update wWindowStackPointer
-	pop hl
+	pop hl									; pop prev. wWindowStackPointer
 	call .ret ; empty function
 	ld a, h
 	ld [de], a
@@ -674,11 +694,9 @@ _ExitMenu::
 	ld a, BANK(wWindowStack)
 	ldh [rSVBK], a
 
-	; Pop the top-most menu header from the windows stack
-	; The two bytes on the top of the stack should be the
-	; address of the window that's right under the active
-	; one. They are used to update wWindowStackPointer
+	; hl <= second and third bytes on the top of the stack
 	call GetWindowStackTop
+	; hl == 0?
 	ld a, l
 	or h
 	jp z, Error_Cant_ExitMenu
@@ -686,7 +704,6 @@ _ExitMenu::
 	ld [wWindowStackPointer], a
 	ld a, h
 	ld [wWindowStackPointer + 1], a
-	
 	call PopWindow
 	ld a, [wMenuFlags]
 	bit 0, a
@@ -753,27 +770,28 @@ Error_Cant_ExitMenu:
 	text_end
 
 _InitVerticalMenuCursor::
+; Init w2DMenuCursorInitY
 	ld a, [wMenuDataFlags]
 	ld b, a
 	ld hl, w2DMenuCursorInitY
 	ld a, [wMenuBorderTopCoord]
 	inc a
 	bit 6, b
-	jr nz, .skip_offset
+	jr nz, .skip_offset ; Skip only one row
 	inc a
 .skip_offset
-	ld [hli], a
-; w2DMenuCursorInitX
+	ld [hli], a						; hl : w2DMenuCursorInitX
+; Init w2DMenuCursorInitX
 	ld a, [wMenuBorderLeftCoord]
 	inc a
-	ld [hli], a
-; w2DMenuNumRows
+	ld [hli], a						; hl : w2DMenuNumRows
+; Init w2DMenuNumRows
 	ld a, [wMenuDataItems]
 	ld [hli], a
-; w2DMenuNumCols
+; Init w2DMenuNumCols
 	ld a, 1
-	ld [hli], a
-; w2DMenuFlags1
+	ld [hli], a						; hl : w2DMenuFlags1
+; Init w2DMenuFlags1
 	ld [hl], $0
 	bit 5, b
 	jr z, .skip_bit_5
@@ -785,20 +803,20 @@ _InitVerticalMenuCursor::
 	set 6, [hl]
 .skip_bit_6
 	inc hl
-; w2DMenuFlags2
+; Init w2DMenuFlags2
 	xor a
 	ld [hli], a
-; w2DMenuCursorOffsets
+; Init w2DMenuCursorOffsets
 	ln a, 2, 0
 	ld [hli], a
-; wMenuJoypadFilter
+; Init wMenuJoypadFilter
 	ld a, A_BUTTON
 	bit 0, b
 	jr nz, .skip_bit_1
 	add B_BUTTON
 .skip_bit_1
 	ld [hli], a
-; wMenuCursorY
+; Init wMenuCursorY
 	ld a, [wMenuCursorPosition]
 	and a
 	jr z, .load_at_the_top
@@ -811,10 +829,10 @@ _InitVerticalMenuCursor::
 .load_position
 	ld [hl], c
 	inc hl
-; wMenuCursorX
+; Init wMenuCursorX
 	ld a, 1
 	ld [hli], a
-; wCursorOffCharacter, wCursorCurrentTile
+; Init wCursorOffCharacter, wCursorCurrentTile
 	xor a
 	ld [hli], a
 	ld [hli], a

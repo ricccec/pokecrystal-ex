@@ -26,8 +26,8 @@ UpdateTime::
 	farcall GetTimeOfDay
 	ret
 
-GetClock::
 ; store clock data in hRTCDayHi-hRTCSeconds
+GetClock::
 
 ; enable clock r/w
 	ld a, SRAM_ENABLE
@@ -80,10 +80,32 @@ FixDays::
 
 ; mod 140
 ; mod twice since bit 8 (DH) was set
+; In this case, since bit 8 is set, we want to compute:
+;     x = (256 + DL) mod 140
+;
+; We can express DL as (y + n * 140), where y = DL mod 140. Substituting this
+; into the expression gives:
+;     256 + DL = (116 + 140) + (y + n * 140) = 116 + y + n * 140
+;
+; So the final result becomes:
+;     x = (116 + y + n * 140) mod 140 = (116 + y) mod 140
+;
+; To compute y = DL mod 140, we first subtract 140 from DL in a loop until the
+; result becomes negative. This leaves ACC = y - 140, which is equivalent to:
+;     256 + (y - 140) = 116 + y
+;
+; At this point, we only need to compute (116 + y) mod 140 to get x.
+; In general, to compute a mod b without division, we subtract b from a
+; repeatedly until the result becomes negative, then add b back once.
+;
+; Here, we subtract 140 from ACC until it becomes negative, then add 140 back.
+; This gives us:
+;     (116 + y) mod 140 = x
+
 	ldh a, [hRTCDayLo]
 .modh
 	sub 140
-	jr nc, .modh
+	jr nc, .modh	; Result not negative
 .modl
 	sub 140
 	jr nc, .modl

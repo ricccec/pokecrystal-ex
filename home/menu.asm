@@ -73,6 +73,7 @@ ExitMenu::
 	pop af
 	ret
 
+; Initialized the fields between wMoreMenuData and wMoreMenuDataEnd
 InitVerticalMenuCursor::
 	callfar _InitVerticalMenuCursor
 	ret
@@ -212,6 +213,7 @@ PlaceVerticalMenuItems::
 	add hl, bc
 	jp PlaceString
 
+; Draw a menu box in wTilemap, based on the four fields wMenuBorderXXXCoord
 MenuBox::
 	call MenuBoxCoord2Tile					; hl <- Menu top-left corner
 	call GetMenuBoxDims						; b <- Menu height
@@ -269,8 +271,8 @@ MenuBoxCoord2Tile::
 	ld b, a
 	; fallthrough
 
-Coord2Tile::
 ; Return the address of wTilemap(c, b) in hl.
+Coord2Tile::
 	xor a
 	ld h, a
 	ld l, b
@@ -540,6 +542,7 @@ SetUpMenu::
 	set 7, [hl]
 	ret
 
+; Draws a menu box big enough to include all the items in the menu
 DrawVariableLengthMenuBox::
 	call CopyMenuData
 	call GetMenuIndexSet
@@ -563,6 +566,7 @@ MenuWriteText::
 	ret
 
 ; Compute wMenuBorderBottomCoord based on the number of items in the menu
+; wMenuDataItems : number of items in the menu
 AutomaticGetMenuBottomCoord::
 	; c <- Menu width
 	ld a, [wMenuBorderLeftCoord]
@@ -612,25 +616,31 @@ GetMenuIndexSet::
 	ld [wMenuDataItems], a
 	ret
 
+; de : Menu items addr.
 RunMenuItemPrintingFunction::
 	call MenuBoxCoord2Tile
 	ld bc, 2 * SCREEN_WIDTH + 2
 	add hl, bc
 .loop
+	; Store current item in wMenuSelection
 	inc de
 	ld a, [de]
-	cp -1
+	cp -1	; No more items
 	ret z
 	ld [wMenuSelection], a
+	; Push current item
 	push de
+	; Execute the routine pointed by wMenuDataDisplayFunctionPointer
 	push hl
 	ld d, h
 	ld e, l
 	ld hl, wMenuDataDisplayFunctionPointer
 	call ._hl_
 	pop hl
+	; Skip two rows
 	ld de, 2 * SCREEN_WIDTH
 	add hl, de
+	; Pop current item
 	pop de
 	jr .loop
 
@@ -643,12 +653,14 @@ RunMenuItemPrintingFunction::
 InitMenuCursorAndButtonPermissions::
 	call InitVerticalMenuCursor
 	ld hl, wMenuJoypadFilter
+	; START enabled?
 	ld a, [wMenuDataFlags]
 	bit 3, a
 	jr z, .disallow_select
 	set START_F, [hl]
 
 .disallow_select
+	; LEFT RIGHT enabled
 	ld a, [wMenuDataFlags]
 	bit 2, a
 	jr z, .disallow_left_right
@@ -719,17 +731,19 @@ ContinueGettingMenuJoypad:
 	scf
 	ret
 
+; IN de		: wTilemap addr. of the string
 PlaceMenuStrings::
 	push de
+	; hl <- Addr. of 1st menu string
 	ld hl, wMenuDataPointerTableAddr
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
-	ld a, [wMenuSelection]
+	ld a, [wMenuSelection] ; Current menu item
 	call GetNthString
 	ld d, h
 	ld e, l
-	pop hl
+	pop hl	; wTilemap addr.
 	call PlaceString
 	ret
 

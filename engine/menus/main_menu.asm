@@ -27,17 +27,23 @@ MainMenu:
 .loop
 	xor a
 	ld [wDisableTextAcceleration], a
+	
 	call ClearTilemapEtc
 	ld b, SCGB_DIPLOMA
 	call GetSGBLayout
 	call SetDefaultBGPAndOBP
+	
 	ld hl, wGameTimerPaused
 	res GAME_TIMER_COUNTING_F, [hl]
+
 	call MainMenu_GetWhichMenu
 	ld [wWhichIndexSet], a
+	
 	call MainMenu_PrintCurrentTimeAndDay
+
 	ld hl, .MenuHeader
 	call LoadMenuHeader
+	
 	call MainMenuJoypadLoop
 	call CloseWindow
 	jr c, .quit
@@ -188,13 +194,14 @@ if DEF(_DEBUG)
 endc
 	db -1
 
+; Load in a one of the MainMenuItems indexes
 MainMenu_GetWhichMenu:
 	nop
 	nop
 	nop
 	ld a, [wSaveFileExists]
 	and a
-	jr nz, .next
+	jr nz, .next							; If save files exists
 	ld a, MAINMENU_NEW_GAME
 	ret
 
@@ -202,7 +209,7 @@ MainMenu_GetWhichMenu:
 	ldh a, [hCGB]
 	cp TRUE
 	ld a, MAINMENU_CONTINUE
-	ret nz
+	ret nz									; return if NOT CGB
 	ld a, BANK(sNumDailyMysteryGiftPartnerIDs)
 	call OpenSRAM
 	ld a, [sNumDailyMysteryGiftPartnerIDs]
@@ -242,7 +249,7 @@ MainMenuJoypadLoop:
 .loop
 	call MainMenu_PrintCurrentTimeAndDay
 	ld a, [w2DMenuFlags1]
-	set 5, a
+	set 5, a										; bit 5: Wrap around vertically
 	ld [w2DMenuFlags1], a
 	call GetScrollingMenuJoypad
 	ld a, [wMenuJoypad]
@@ -261,18 +268,22 @@ MainMenuJoypadLoop:
 	scf
 	ret
 
+; If a save file exist, then show the current time and day in a box
 MainMenu_PrintCurrentTimeAndDay:
 	ld a, [wSaveFileExists]
 	and a
 	ret z
+	; Draw the box
 	xor a
 	ldh [hBGMapMode], a
 	call .PlaceBox
+	; Set bit 4 of wOptions before calling PlaceTime
 	ld hl, wOptions
 	ld a, [hl]
 	push af
 	set NO_TEXT_SCROLL, [hl]
 	call .PlaceTime
+	; Restore wOptions
 	pop af
 	ld [wOptions], a
 	ld a, $1
@@ -358,8 +369,6 @@ MainMenu_PrintCurrentTimeAndDay:
 .Day:
 	db "DAY@"
 
-; Clears wTilemap, loads text tiles in vTiles1 and vTiles3, clears
-; the menu data in WRAM and resets the window stack
 ClearTilemapEtc:
 	xor a
 	ldh [hMapAnims], a

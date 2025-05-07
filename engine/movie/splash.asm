@@ -8,7 +8,7 @@ SplashScreen:
 	call ClearBGPalettes	; Fills wBGPals2 and wOBPals2 with $ff
 	call ClearTilemap		; Fills BG Map 0 with " "
 	
-	 ;======== Clear some hRAM ========
+	;======== Clear some hRAM ========
 	; [hBGMapAddress] <- vBGMap0
 	ld a, HIGH(vBGMap0)
 	ldh [hBGMapAddress + 1], a

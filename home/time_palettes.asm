@@ -13,6 +13,7 @@ UpdateTimeAndPals::
 	bit SPRITE_UPDATES_DISABLED_F, a ; obj update
 	ret z
 
+	; SPRITE_UPDATES_DISABLED_F is set
 TimeOfDayPals::
 	callfar _TimeOfDayPals
 	ret

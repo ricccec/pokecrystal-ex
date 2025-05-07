@@ -67,6 +67,9 @@ GetName::
 	rst Bankswitch
 	ret
 
+; IN a 		: menu string index
+; IN hl 	: menu strings addr.
+; OUT hl 	: a-th string addr.
 GetNthString::
 ; Return the address of the
 ; ath string starting from hl.
@@ -81,7 +84,7 @@ GetNthString::
 	ld a, [hli]
 	cp c
 	jr nz, .readChar
-	dec b
+	dec b					; Next string
 	jr nz, .readChar
 	pop bc
 	ret

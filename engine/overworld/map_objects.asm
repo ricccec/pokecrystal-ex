@@ -2170,6 +2170,7 @@ UpdateAllObjectsFrozen::
 	ld a, [wStateFlags]
 	bit SPRITE_UPDATES_DISABLED_F, a
 	ret z
+	; For each object struct...
 	ld bc, wObjectStructs
 	xor a
 .loop
@@ -2178,10 +2179,12 @@ UpdateAllObjectsFrozen::
 	jr z, .ok
 	call UpdateObjectFrozen
 .ok
+	; Next object
 	ld hl, OBJECT_LENGTH
 	add hl, bc
 	ld b, h
 	ld c, l
+	; More objects to update?
 	ldh a, [hMapObjectIndex]
 	inc a
 	cp NUM_OBJECT_STRUCTS

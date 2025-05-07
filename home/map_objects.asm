@@ -585,6 +585,7 @@ ResetVramState_SpriteUpdatesDisabled:: ; unreferenced
 	ret
 
 UpdateSprites::
+	; Check overworld sprites update is enabled
 	ld a, [wStateFlags]
 	bit SPRITE_UPDATES_DISABLED_F, a
 	ret z
@@ -601,6 +602,7 @@ GetObjectStruct::
 	ld c, l
 	ret
 
+; bc : object struct addr.
 DoesObjectHaveASprite::
 	ld hl, OBJECT_SPRITE
 	add hl, bc
