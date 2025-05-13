@@ -66,10 +66,11 @@ endr
 	scf
 	ret
 
+; input: a -> bgp (DMG) or colors order (CGB)
 DmgToCgbBGPals::
 ; exists to forego reinserting cgb-converted image data
 
-; input: a -> bgp
+
 
 	ldh [rBGP], a				; rBGP: DMG background palette register
 	push af
@@ -86,7 +87,7 @@ DmgToCgbBGPals::
 	ldh a, [rSVBK]
 	push af
 
-	; Swith to WRAM bank that contains wBGPals2
+; Swith to WRAM bank that contains wBGPals2
 	ld a, BANK(wBGPals2)
 	ldh [rSVBK], a
 
@@ -234,8 +235,8 @@ DmgToCgbObjPal1::
 	pop af
 	ret
 
-CopyPals::
 ; copy c palettes in order b from de to hl
+CopyPals::
 
 	push bc
 	ld c, NUM_PAL_COLORS

@@ -28,7 +28,7 @@ _TimeOfDayPals::
 	ld a, [wTimeOfDay]
 	ld [wCurTimeOfDay], a
 
-; get palette id
+; get palette id and store it in a
 	call GetTimePalette
 
 ; same palette as before?
@@ -39,7 +39,7 @@ _TimeOfDayPals::
 ; update palette id
 	ld [wTimeOfDayPal], a
 
-; save bg palette 7
+; Load hl with the address of the 8th palette in wBGPals1
 	ld hl, wBGPals1 palette PAL_BG_TEXT
 
 ; save wram bank
@@ -49,7 +49,7 @@ _TimeOfDayPals::
 	ld a, BANK(wBGPals1)
 	ldh [rSVBK], a
 
-; push palette
+; push text palette onto the stack 
 	ld c, NUM_PAL_COLORS
 .push
 	ld d, [hl]

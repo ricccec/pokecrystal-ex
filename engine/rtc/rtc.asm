@@ -28,7 +28,7 @@ GetTimeOfDay::
 	ld hl, TimesOfDay
 
 .check
-; if we're within the given time period,
+; if we're before the current time period end,
 ; get the corresponding time of day
 	cp [hl]
 	jr c, .match

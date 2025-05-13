@@ -115,6 +115,16 @@ WaitTop::
 	ldh [hBGMapMode], a
 	ret
 
+; UpdateBGMap::
+; Updates the VRAM BG and attr. maps during VBLANK.
+; More specifically, copies wAttrMap or wTilemap into VRAM depending on the current mode.
+; Updates are performed in thirds of the screen, starting from the top.
+; 
+; Registers/Variables:
+; - hBGMapMode: Determine which part of the BG Map to update:
+; - hBGMapAddress: Specifies the starting address in VRAM of the target BG Map (either vBGMap0 or vBGMap1)
+; - hBGMapThird: Which third to update during current execution
+; 
 UpdateBGMap::
 ; Update the BG Map, in thirds, from wTilemap and wAttrmap.
 
@@ -130,7 +140,10 @@ UpdateBGMap::
 
 ; BG Map 1
 	dec a ; useless
+	; Store vBGMap1 into hBGMapAddress
 
+	; Push the current BG Map address (hBGMapAddress and hBGMapAddress + 1)
+	; onto the stack for later use.
 	ldh a, [hBGMapAddress]
 	ld l, a
 	ldh a, [hBGMapAddress + 1]
@@ -142,6 +155,7 @@ UpdateBGMap::
 	ld a, HIGH(vBGMap1)
 	ldh [hBGMapAddress + 1], a
 
+	; Tiles or attr.?
 	ldh a, [hBGMapMode]
 	push af
 	cp 3
@@ -150,6 +164,7 @@ UpdateBGMap::
 	cp 4
 	call z, .Attr
 
+	; Pop hBGMapAddress
 	pop hl
 	ld a, l
 	ldh [hBGMapAddress], a
@@ -158,10 +173,11 @@ UpdateBGMap::
 	ret
 
 .Attr:
+	; Switch to second VRAM bank
 	ld a, 1
 	ldh [rVBK], a
 
-	hlcoord 0, 0, wAttrmap
+	hlcoord 0, 0, wAttrmap 				; hl <- wAttrmap
 	call .update
 
 	ld a, 0
@@ -169,7 +185,7 @@ UpdateBGMap::
 	ret
 
 .Tiles:
-	hlcoord 0, 0
+	hlcoord 0, 0						; hl <- wTilemap
 
 .update
 	ld [hSPBuffer], sp
@@ -185,15 +201,19 @@ UpdateBGMap::
 DEF THIRD_HEIGHT EQU SCREEN_HEIGHT / 3
 
 ; bottom
+	; Increase source addr. to point to the bottom third,
+	; then load source addr. into the stack register
 	ld de, 2 * THIRD_HEIGHT * SCREEN_WIDTH
 	add hl, de
 	ld sp, hl
 
+	; Load destination addr. into hl
 	ldh a, [hBGMapAddress + 1]
 	ld h, a
 	ldh a, [hBGMapAddress]
 	ld l, a
 
+	; Increase dest addr. to point to the bottom third
 	ld de, 2 * THIRD_HEIGHT * BG_MAP_WIDTH
 	add hl, de
 

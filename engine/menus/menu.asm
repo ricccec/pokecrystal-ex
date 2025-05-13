@@ -331,6 +331,7 @@ MenuJoypadLoop:
 .BGMap_OAM:
 	ldh a, [hOAMUpdate]
 	push af
+	; Set the hOAMUpdate flag to 1. See vblank.asm
 	ld a, $1
 	ldh [hOAMUpdate], a
 	call WaitBGMap
@@ -502,15 +503,17 @@ _2DMenuInterpretJoypad:
 ;	wMenuCursorY: cursor offset from w2DMenuCursorInitY
 ;	wMenuCursorX
 Move2DMenuCursor:
-	; a ‹- wTilemap addr. of the cursor current tile
+	; hl <- addr. of the cursor's current tile in wTilemap
 	ld hl, wCursorCurrentTile
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
+	; Load the tile character at the current cursor position into a
 	ld a, [hl]
+	; Compare the tile character with the cursor tile ("▶")
 	cp "▶"
 	jr nz, Place2DMenuCursor
-	; Overwrite the tile according to wCursorOffCharacter
+	; Overwrite the current cursor tile with the character from wCursorOffCharacter
 	ld a, [wCursorOffCharacter]
 	ld [hl], a
 Place2DMenuCursor:
