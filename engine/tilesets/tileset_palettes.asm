@@ -1,3 +1,7 @@
+; Checks the current map's tileset (wMapTileset) against constant values 
+; defined in constants/tileset_constants.asm. If a match is found, it loads in wBGPals1
+; the specific palette for the corresponding tileset and sets the carry flag.
+; Otherwise, it does nothing and exits.
 LoadSpecialMapPalette:
 	ld a, [wMapTileset]
 	cp TILESET_POKECOM_CENTER

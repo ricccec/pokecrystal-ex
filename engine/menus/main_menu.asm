@@ -48,6 +48,7 @@ MainMenu:
 	call CloseWindow
 	jr c, .quit
 	call ClearTilemap
+	; Jump to Jumptable + 2*wMenuSelection
 	ld a, [wMenuSelection]
 	ld hl, .Jumptable
 	rst JumpTable
@@ -244,6 +245,7 @@ MainMenu_GetWhichMenu:
 	ld a, MAINMENU_MYSTERY
 	ret
 
+; Clears the carry flag if the player clicked A, sets it if the player clicked B
 MainMenuJoypadLoop:
 	call SetUpMenu
 .loop
@@ -261,7 +263,7 @@ MainMenuJoypadLoop:
 
 .a_button
 	call PlayClickSFX
-	and a
+	and a ; Clear carry
 	ret
 
 .b_button

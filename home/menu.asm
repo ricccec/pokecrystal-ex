@@ -32,6 +32,8 @@ ScrollingMenuJoypad::
 	call GetMenuJoypad
 	ret
 
+; Packs the D_PAD state(from hJoyLast) and the buttons
+; state (from hJoyPressed) into a
 GetMenuJoypad::
 	push bc
 	push af
@@ -670,6 +672,8 @@ InitMenuCursorAndButtonPermissions::
 .disallow_left_right
 	ret
 
+; wMenuSelection
+; wMenuJoypad 
 GetScrollingMenuJoypad::
 	call ScrollingMenuJoypad
 	ld hl, wMenuJoypadFilter

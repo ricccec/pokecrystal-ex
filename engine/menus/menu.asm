@@ -247,10 +247,13 @@ Init2DMenuCursorPosition:
 _StaticMenuJoypad::
 	call Place2DMenuCursor
 _ScrollingMenuJoypad::
+; Reset bit 7 of w2DMenuFlags2
 	ld hl, w2DMenuFlags2
 	res 7, [hl]
 	ldh a, [hBGMapMode]
 	push af
+	; Update time of day palettes and cursor position until a button
+	; that matches wMenuJoypadFilter is pressed 
 	call MenuJoypadLoop
 	pop af
 	ldh [hBGMapMode], a
@@ -310,15 +313,19 @@ Function241d5: ; unreferenced
 
 MenuJoypadLoop:
 .loop
+	; Draw menu cursor
 	call Move2DMenuCursor
 	call .BGMap_OAM
+	; Read the RTC and update the palettes
 	call Do2DMenuRTCJoypad
-	jr nc, .done
+	jr nc, .done	; No button pressed?
+	; Update wMenuCursorX and wMenuCursorY
 	call _2DMenuInterpretJoypad
 	jr c, .done
 	ld a, [w2DMenuFlags1]
 	bit 7, a
 	jr nz, .done
+	; Exit loop if any relevant button was pressed
 	call GetMenuJoypad
 	ld b, a
 	ld a, [wMenuJoypadFilter]
@@ -341,6 +348,9 @@ MenuJoypadLoop:
 	ldh [hBGMapMode], a
 	ret
 
+; Reads the RTC to update the in-game time, updates the BG and OBJ palettes
+; based on the time of the day, packs the joypad state into a and sets the
+; carry flag if a button was pressed
 Do2DMenuRTCJoypad:
 .loopRTC
 	call UpdateTimeAndPals
@@ -349,9 +359,10 @@ Do2DMenuRTCJoypad:
 	ld a, [w2DMenuFlags1]
 	bit 7, a
 	jr z, .loopRTC
-	and a
+	and a	; Update flags
 	ret
 
+; Packs the joypad state into a and sets the carry flag if a button was pressed
 Menu_WasButtonPressed:
 	ld a, [w2DMenuFlags1]
 	bit 6, a
@@ -361,6 +372,7 @@ Menu_WasButtonPressed:
 .skip_to_joypad
 	call JoyTextDelay
 	call GetMenuJoypad
+	; No button pressed?
 	and a
 	ret z
 	vc_hook Forbid_printing_photo_studio
@@ -368,6 +380,8 @@ Menu_WasButtonPressed:
 	vc_hook Forbid_printing_PC_Box
 	ret
 
+; Moves the cursor in the menu and handles the wrap-around (if enabled)
+; Sets the carry flag if the menu needs to be closed
 _2DMenuInterpretJoypad:
 	call GetMenuJoypad
 	bit A_BUTTON_F, a
@@ -392,7 +406,7 @@ _2DMenuInterpretJoypad:
 .set_bit_7
 	ld hl, w2DMenuFlags2
 	set 7, [hl]
-	scf
+	scf		; Set carry flag
 	ret
 
 .d_down
@@ -401,7 +415,7 @@ _2DMenuInterpretJoypad:
 	cp [hl]
 	jr z, .check_wrap_around_down
 	inc [hl]
-	xor a
+	xor a	; Reset carry flag
 	ret
 
 .check_wrap_around_down
@@ -582,12 +596,13 @@ _PushWindow::
 	push af
 	ld a, BANK(wWindowStack)
 	ldh [rSVBK], a
-	; de <- head of the windows stack
+	; de point to the current head of the windows stack
 	ld hl, wWindowStackPointer
 	ld e, [hl]
 	inc hl
 	ld d, [hl]
-	push de 								; Push curr. win. stack head
+	; Push curr. addr. of win. stack head
+	push de 								
 	; Push wMenuHeader in the windows stack
 	ld b, wMenuHeaderEnd - wMenuHeader
 	ld hl, wMenuHeader
@@ -597,27 +612,26 @@ _PushWindow::
 	dec de
 	dec b
 	jr nz, .loop
-	; Done pushing
+	; Done pushing (de now points to the top of the stack)
 
-; If bit 6 or 7 of the menu flags is set, set bit 0 of the address
-; at 7:[wWindowStackPointer], and draw the menu using the coordinates from the header.
-; Otherwise, reset bit 0 of 7:[wWindowStackPointer].
+; Jump to .bit_6 if either bit 6 or 7 of wMenuFlags is set, otherwise jump to .not_bit_7
 	ld a, [wMenuFlags]
 	bit 6, a
 	jr nz, .bit_6
 	bit 7, a
 	jr z, .not_bit_7
 
-.bit_6										; Bit 6 or 7 is set
+.bit_6	; Bit 6 or 7 is set
 	; Set bit 0 of wWindowStackPointer
-	; At this point wWindowStackPointer points to the first byte (the flag byte) of the
-	; menu header that we've just pushed
+	; At this point wWindowStackPointer still points to the first byte (the flag byte) of the
+	; menu header that was on the top of the stack
 	ld hl, wWindowStackPointer
 	ld a, [hli]
 	ld h, [hl]
 	ld l, a
 	set 0, [hl]
 	
+	; draw the menu using the coordinates from the header.
 	call MenuBoxCoord2Tile					; hl <- wTilemap addr. of the top-left corner
 	call .copy
 	call MenuBoxCoord2Attr
@@ -625,7 +639,8 @@ _PushWindow::
 	jr .done
 
 .not_bit_7
-	pop hl ; last-pushed register was de
+	; Reset bit 0 of 7:[wWindowStackPointer]
+	pop hl ; Pop prev. addr. of win. stack head
 	push hl
 	ld a, [hld]
 	ld l, [hl]
@@ -636,12 +651,14 @@ _PushWindow::
 	; Update wWindowStackPointer
 	pop hl									; pop prev. wWindowStackPointer
 	call .ret ; empty function
+	; Push prev. wWindowStackPointer to the top of the windows stack
 	ld a, h
 	ld [de], a
 	dec de
 	ld a, l
 	ld [de], a
 	dec de
+	; Update wWindowStackPointer
 	ld hl, wWindowStackPointer
 	ld [hl], e
 	inc hl

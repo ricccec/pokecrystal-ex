@@ -36,10 +36,10 @@ _TimeOfDayPals::
 	cp [hl]
 	jr z, .dontchange
 
-; update palette id
+; update wTimeOfDayPal w/ new palette id
 	ld [wTimeOfDayPal], a
 
-; Load hl with the address of the 8th palette in wBGPals1
+; Load hl with the address of the 8th palette in wBGPals1 (text palette)
 	ld hl, wBGPals1 palette PAL_BG_TEXT
 
 ; save wram bank
@@ -64,11 +64,11 @@ _TimeOfDayPals::
 	ld a, b
 	ldh [rSVBK], a
 
-; update sgb pals
+; update sgb pals (wBGPals1 and wOBPals1)
 	ld b, SCGB_MAPPALS
 	call GetSGBLayout
 
-; restore bg palette 7
+; restore bg palette 7 (text palette)
 	ld hl, wOBPals1 - 1 ; last byte in wBGPals1
 
 ; save wram bank
@@ -78,7 +78,7 @@ _TimeOfDayPals::
 	ld a, BANK(wOBPals1)
 	ldh [rSVBK], a
 
-; pop palette
+; pop text palette
 	ld e, NUM_PAL_COLORS
 .pop
 	pop bc
@@ -107,8 +107,10 @@ _TimeOfDayPals::
 	ret
 
 _UpdateTimePals::
+; Load addr. of fade table 10th byte into hl
 	ld c, $9 ; normal
-	call GetTimePalFade
+	call GetTimePalFade		
+; Copy palettes from wBGPals1 to wBGPals2 and from wOBPals1 to wOBPals2
 	call DmgToCgbTimePals
 	ret
 
@@ -266,12 +268,12 @@ DmgToCgbTimePals:
 	push hl
 	push de
 	ld a, [hli]
-	call DmgToCgbBGPals
+	call DmgToCgbBGPals ; CGB: Copy palettes from wBGPals1 to wBGPals2 in order 3, 2, 1, 0
 	ld a, [hli]
 	ld e, a
 	ld a, [hli]
 	ld d, a
-	call DmgToCgbObjPals
+	call DmgToCgbObjPals ; CGB: Copy palettes from wOBPals1 to wOBPals2 in order 3, 2, 1, 0
 	pop de
 	pop hl
 	ret
@@ -342,6 +344,7 @@ GetTimePalFade:
 	dw .darkness
 
 .morn
+;	   bgp    	obp1  	 obp2
 	dc 3,3,3,3, 3,3,3,3, 3,3,3,3
 	dc 3,3,3,2, 3,3,3,2, 3,3,3,2
 	dc 3,3,2,1, 3,2,1,0, 3,2,1,0

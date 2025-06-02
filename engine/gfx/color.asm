@@ -1215,7 +1215,7 @@ INCLUDE "data/trainers/palettes.asm"
 
 LoadMapPals:
 	farcall LoadSpecialMapPalette
-	jr c, .got_pals
+	jr c, .got_pals	; Palette already handled by LoadSpecialMapPalette
 
 	; Which palette group is based on whether we're outside or inside
 	ld a, [wEnvironment]
@@ -1274,6 +1274,7 @@ LoadMapPals:
 	ldh [rSVBK], a
 
 .got_pals
+; Load the object palettes into wOBPals1
 	ld a, [wTimeOfDayPal]
 	maskbits NUM_DAYTIMES
 	ld bc, 8 palettes
@@ -1284,12 +1285,14 @@ LoadMapPals:
 	ld a, BANK(wOBPals1)
 	call FarCopyWRAM
 
+; Are we in a town or route?
 	ld a, [wEnvironment]
 	cp TOWN
 	jr z, .outside
 	cp ROUTE
 	ret nz
 .outside
+; Select the appropriate roof palette based on map group
 	ld a, [wMapGroup]
 	ld l, a
 	ld h, 0
@@ -1298,6 +1301,7 @@ LoadMapPals:
 	add hl, hl
 	ld de, RoofPals
 	add hl, de
+; Refine by time of day
 	ld a, [wTimeOfDayPal]
 	maskbits NUM_DAYTIMES
 	cp NITE_F
@@ -1306,6 +1310,7 @@ rept 4
 	inc hl
 endr
 .morn_day
+; Load palette into wBGPals1 palette 6 (roofs)
 	ld de, wBGPals1 palette PAL_BG_ROOF color 1
 	ld bc, 4
 	ld a, BANK(wBGPals1)

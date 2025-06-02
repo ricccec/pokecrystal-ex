@@ -70,8 +70,6 @@ endr
 DmgToCgbBGPals::
 ; exists to forego reinserting cgb-converted image data
 
-
-
 	ldh [rBGP], a				; rBGP: DMG background palette register
 	push af
 
@@ -92,13 +90,13 @@ DmgToCgbBGPals::
 	ldh [rSVBK], a
 
 ; copy & reorder bg pal buffer
-	ld hl, wBGPals2 ; to
-	ld de, wBGPals1 ; from
+	ld hl, wBGPals2 ; Destination
+	ld de, wBGPals1 ; Source
 ; order
-	ldh a, [rBGP]
+	ldh a, [rBGP]	; Color order
 	ld b, a
 ; all pals
-	ld c, 8
+	ld c, 8			; Number of palettes
 	call CopyPals 	; copy 8 palettes in order b from wBGPals1 to wBGPals2
 ; request pal update
 	ld a, TRUE
